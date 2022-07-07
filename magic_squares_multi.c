@@ -48,11 +48,11 @@ int increment_row(int *matrix, int row, int magic_number) {
     return 1;
 }
 
-void print_magic_square(int *matrix) {
+void print_magic_square(int *matrix, FILE *outfile) {
     int i;
     for (i = 0; i < 4; i++)
-        printf("%d %d %d %d\n", E(matrix, i, 0), E(matrix, i, 1), E(matrix, i, 2), E(matrix, i, 3));
-    printf("\n");
+        fprintf(outfile, "%d %d %d %d\n", E(matrix, i, 0), E(matrix, i, 1), E(matrix, i, 2), E(matrix, i, 3));
+    fprintf(outfile, "\n");
 }
 
 int sum_of_row(int *matrix, int row) {
@@ -242,7 +242,6 @@ int find_magic_squares(int magic_number, int *seed_row, struct matrix_list_entry
                     tmp->next = *matrix_list;
                     *matrix_list = tmp;
                     magic_square_count++;
-                    /* print_magic_square(matrix); */
                 }
             }
         }
@@ -288,7 +287,8 @@ int main(int argc, char **argv) {
     struct thread_info *thread_info_array = malloc(sizeof(struct thread_info) * num_cores);
     struct matrix_list_entry *current;
     int opt;
-    char *outfile = NULL;
+    char *outfilename = NULL;
+    FILE *outfile = NULL;
     int strict = 0;
     while ((opt = getopt(argc, argv, "hm:o:ps")) != -1) {
         switch (opt) {
@@ -299,7 +299,7 @@ int main(int argc, char **argv) {
                 magic_number = atoi(optarg);
                 break;
             case 'o':
-                outfile = optarg;
+                outfilename = optarg;
                 break;
             case 'p':
                 START_NUM = 1;
@@ -330,11 +330,17 @@ int main(int argc, char **argv) {
         total_squares += (unsigned long long)square_count;
     }
     fprintf(stderr, "There were %lld distinct magic squares found.\n\n", total_squares);
+    if (outfilename != NULL)
+        outfile = fopen(outfilename, "w");
+    else
+        outfile = stdout;
     for (i = 0; i < num_cores; i++) {
         current = thread_info_array[i].matrix_list;
         while (current != NULL) {
-            print_magic_square(current->matrix);
+            print_magic_square(current->matrix, outfile);
             current = current->next;
         }
     }
+    if (outfile != stdout)
+        fclose(outfile);
 }
