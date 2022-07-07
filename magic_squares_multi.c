@@ -8,6 +8,8 @@
 #define SIZE (4)
 #define E(m, r, c) (m[(r << LOGSIZE) + c])
 
+int START_NUM = 0;
+
 struct row_list_entry {
     int row[SIZE];
     struct row_list_entry *next;
@@ -22,6 +24,7 @@ struct thread_info {
     int thread_id;
     int total_threads;
     int magic_number;
+    int strict;
     struct row_list_entry *row_list;
     struct matrix_list_entry *matrix_list;
 };
@@ -30,15 +33,15 @@ int increment_row(int *matrix, int row, int magic_number) {
     E(matrix, row, 0)++;
     if (E(matrix, row, 0) <= magic_number)
         return 0;
-    E(matrix, row, 0) = 0;
+    E(matrix, row, 0) = START_NUM;
     E(matrix, row, 1)++;
     if (E(matrix, row, 1) <= magic_number)
         return 0;
-    E(matrix, row, 1) = 0;
+    E(matrix, row, 1) = START_NUM;
     E(matrix, row, 2)++;
     if (E(matrix, row, 2) <= magic_number)
         return 0;
-    E(matrix, row, 2) = 0;
+    E(matrix, row, 2) = START_NUM;
     E(matrix, row, 3)++;
     if (E(matrix, row, 3) <= magic_number)
         return 0;
@@ -82,16 +85,16 @@ int duplicates_exist(int *matrix, int index) {
     return 0;
 }
 
-void zero_row(int *matrix, int row) {
-    E(matrix, row, 0) = 0;
-    E(matrix, row, 1) = 0;
-    E(matrix, row, 2) = 0;
-    E(matrix, row, 3) = 0;
+void reset_row(int *matrix, int row) {
+    E(matrix, row, 0) = START_NUM;
+    E(matrix, row, 1) = START_NUM;
+    E(matrix, row, 2) = START_NUM;
+    E(matrix, row, 3) = START_NUM;
 }
 
 void compute_rows(int magic_number, struct row_list_entry **row_list, int *count) {
     struct row_list_entry *tmp;
-    int row[SIZE] = {0, 0, 0, 0};
+    int row[SIZE] = {START_NUM, START_NUM, START_NUM, START_NUM};
     *row_list = NULL;
     *count = 0;
     while (increment_row(row, 0, magic_number) == 0) {
@@ -112,10 +115,10 @@ void compute_rows(int magic_number, struct row_list_entry **row_list, int *count
     }
 }
 
-int find_magic_squares(int magic_number, int *seed_row, struct matrix_list_entry **matrix_list) {
+int find_magic_squares(int magic_number, int *seed_row, struct matrix_list_entry **matrix_list, int strict) {
     int magic_square_count = 0;
     struct matrix_list_entry *tmp;
-    int matrix[SIZE*SIZE] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    int matrix[SIZE*SIZE] = {START_NUM, START_NUM, START_NUM, START_NUM, START_NUM, START_NUM, START_NUM, START_NUM, START_NUM, START_NUM, START_NUM, START_NUM, START_NUM, START_NUM, START_NUM, START_NUM};
     matrix[0] = seed_row[0];
     matrix[1] = seed_row[1];
     matrix[2] = seed_row[2];
@@ -151,11 +154,25 @@ int find_magic_squares(int magic_number, int *seed_row, struct matrix_list_entry
             E(matrix, 1, 2) = magic_number;
             continue;
         }
+        /*
+        if (sum_of_row(matrix, 1) > magic_number) {
+            E(matrix, 1, 0) = magic_number;
+            continue;
+        } else if (sum_of_row(matrix, 1) < magic_number)
+            E(matrix, 1, 0) = magic_number - E(matrix, 1, 1) - E(matrix, 1, 2) - E(matrix, 1, 3) - 1;
+            continue;
+        */
         if (sum_of_row(matrix, 1) != magic_number)
             continue;
+        if (strict) {
+            if (E(matrix, 0, 0) + E(matrix, 0, 1) + E(matrix, 1, 0) + E(matrix, 1, 1) != magic_number)
+                continue;
+            if (E(matrix, 0, 2) + E(matrix, 0, 3) + E(matrix, 1, 2) + E(matrix, 1, 3) != magic_number)
+                continue;
+        }
         if (duplicates_exist(matrix, 8))
             continue;
-        zero_row(matrix, 2);
+        reset_row(matrix, 2);
         while (increment_row(matrix, 2, magic_number) == 0) {
             if (E(matrix, 0, 3) + E(matrix, 1, 3) + E(matrix, 2, 3) > magic_number)
                 break;
@@ -189,9 +206,13 @@ int find_magic_squares(int magic_number, int *seed_row, struct matrix_list_entry
             }
             if (sum_of_row(matrix, 2) != magic_number)
                 continue;
+            if (strict) {
+                if (E(matrix, 1, 1) + E(matrix, 1, 2) + E(matrix, 2, 1) + E(matrix, 2, 2) != magic_number)
+                    continue;
+            }
             if (duplicates_exist(matrix, 12))
                 continue;
-            zero_row(matrix, 3);
+            reset_row(matrix, 3);
             /* delete diagonal and rotational symmetry by forcing top left corner smallest */
             E(matrix, 3, 3) = E(matrix, 0, 0) + 1;
             while (increment_row(matrix, 3, magic_number) == 0) {
@@ -207,6 +228,12 @@ int find_magic_squares(int magic_number, int *seed_row, struct matrix_list_entry
                 }
                 if (sum_of_row(matrix, 3) != magic_number)
                     continue;
+                if (strict) {
+                    if (E(matrix, 2, 0) + E(matrix, 2, 1) + E(matrix, 3, 0) + E(matrix, 3, 1) != magic_number)
+                        continue;
+                    if (E(matrix, 2, 2) + E(matrix, 2, 3) + E(matrix, 3, 2) + E(matrix, 3, 3) != magic_number)
+                        continue;
+                }
                 if (duplicates_exist(matrix, 16))
                     continue;
                 if (columns_correct(matrix, magic_number) && diagonals_correct(matrix, magic_number)) {
@@ -232,19 +259,26 @@ void *thread_find_magic_squares(void *arg) {
     unsigned long long magic_square_count = 0;
     unsigned long long magic_square_total = 0;
     while (seed_row_entry != NULL) {
-        magic_square_count = find_magic_squares(info->magic_number, seed_row_entry->row, &info->matrix_list);
+        magic_square_count = find_magic_squares(info->magic_number, seed_row_entry->row, &info->matrix_list, info->strict);
         magic_square_total += magic_square_count;
         if (magic_square_count)
-            printf("Thread %d\tfound %lld additional magic squares from seed row [%d %d %d %d]\n", info->thread_id, magic_square_count, seed_row_entry->row[0], seed_row_entry->row[1], seed_row_entry->row[2], seed_row_entry->row[3]);
+            fprintf(stderr, "Thread %d\tfound %lld additional magic squares from seed row [%d %d %d %d]\n", info->thread_id, magic_square_count, seed_row_entry->row[0], seed_row_entry->row[1], seed_row_entry->row[2], seed_row_entry->row[3]);
         else
-            printf("Thread %d\tfound no magic squares from seed row [%d %d %d %d]\n", info->thread_id, seed_row_entry->row[0], seed_row_entry->row[1], seed_row_entry->row[2], seed_row_entry->row[3]);
+            fprintf(stderr, "Thread %d\tfound no magic squares from seed row [%d %d %d %d]\n", info->thread_id, seed_row_entry->row[0], seed_row_entry->row[1], seed_row_entry->row[2], seed_row_entry->row[3]);
         for (i = 0; i < info->total_threads && seed_row_entry != NULL; i++)
             seed_row_entry = seed_row_entry->next;
     }
     pthread_exit((void *)magic_square_total);
 }
 
-int main() {
+char *USAGE = "USAGE: %s [-h] [-m NUMBER] [-p] [-s]\n"
+"   -h          display this help message\n"
+"   -m NUMBER   use NUMBER as the magic number\n"
+"   -o OUTFILE  write results to the following output file -- default is stdout\n"
+"   -p          only allow positive (non-zero) numbers -- default allows 0\n"
+"   -s          strict, where quadrants and the center must also add to the magic number\n";
+
+int main(int argc, char **argv) {
     int magic_number = 33;
     struct row_list_entry *row_list;
     int row_count, i;
@@ -253,15 +287,41 @@ int main() {
     unsigned int num_cores = sysconf(_SC_NPROCESSORS_ONLN);
     struct thread_info *thread_info_array = malloc(sizeof(struct thread_info) * num_cores);
     struct matrix_list_entry *current;
+    int opt;
+    char *outfile = NULL;
+    int strict = 0;
+    while ((opt = getopt(argc, argv, "hm:o:ps")) != -1) {
+        switch (opt) {
+            case 'h':
+                fprintf(stderr, USAGE, argv[0]);
+                exit(1);
+            case 'm':
+                magic_number = atoi(optarg);
+                break;
+            case 'o':
+                outfile = optarg;
+                break;
+            case 'p':
+                START_NUM = 1;
+                break;
+            case 's':
+                strict = 1;
+                break;
+            default:
+                fprintf(stderr, USAGE, argv[0]);
+                exit(1);
+        }
+    }
     compute_rows(magic_number, &row_list, &row_count);
-    printf("Found %d viable seed rows.\n", row_count);
-    printf("Running with %d processing threads.\n\n", num_cores);
+    fprintf(stderr, "Found %d viable seed rows.\n", row_count);
+    fprintf(stderr, "Running with %d processing threads.\n\n", num_cores);
     pthread_t *thread_array = malloc(sizeof(pthread_t) * num_cores);
     for (i = 0; i < num_cores; i++) {
         thread_info_array[i].thread_id = i;
         thread_info_array[i].total_threads = num_cores;
         thread_info_array[i].row_list = row_list;
         thread_info_array[i].magic_number = magic_number;
+        thread_info_array[i].strict = strict;
         thread_info_array[i].matrix_list = NULL;
         pthread_create(thread_array + i, NULL, &thread_find_magic_squares, thread_info_array + i);
     }
@@ -269,7 +329,7 @@ int main() {
         pthread_join(thread_array[i], &square_count);
         total_squares += (unsigned long long)square_count;
     }
-    printf("There were %lld distinct magic squares found.\n\n", total_squares);
+    fprintf(stderr, "There were %lld distinct magic squares found.\n\n", total_squares);
     for (i = 0; i < num_cores; i++) {
         current = thread_info_array[i].matrix_list;
         while (current != NULL) {
