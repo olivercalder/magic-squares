@@ -6,7 +6,7 @@
 
 #define LOGSIZE (2)
 #define SIZE (4)
-#define E(m, r, c) (m[(r << LOGSIZE) + c])
+#define E(m, r, c) ((m)[((r) << (LOGSIZE)) + (c)])
 
 int START_NUM = 0;
 

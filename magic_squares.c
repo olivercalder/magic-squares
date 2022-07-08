@@ -2,7 +2,7 @@
 
 #define LOGSIZE (2)
 #define SIZE (4)
-#define E(m, r, c) (m[(r << LOGSIZE) + c])
+#define E(m, r, c) ((m)[((r) << (LOGSIZE)) + (c)])
 
 void print_magic_square(int *matrix) {
     int i;
