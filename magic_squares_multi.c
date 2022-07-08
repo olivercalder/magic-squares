@@ -154,15 +154,11 @@ int find_magic_squares(int magic_number, int *seed_row, struct matrix_list_entry
             E(matrix, 1, 2) = magic_number;
             continue;
         }
-        /*
         if (sum_of_row(matrix, 1) > magic_number) {
             E(matrix, 1, 0) = magic_number;
             continue;
         } else if (sum_of_row(matrix, 1) < magic_number)
             E(matrix, 1, 0) = magic_number - E(matrix, 1, 1) - E(matrix, 1, 2) - E(matrix, 1, 3) - 1;
-            continue;
-        */
-        if (sum_of_row(matrix, 1) != magic_number)
             continue;
         if (strict) {
             if (E(matrix, 0, 0) + E(matrix, 0, 1) + E(matrix, 1, 0) + E(matrix, 1, 1) != magic_number)
@@ -204,7 +200,11 @@ int find_magic_squares(int magic_number, int *seed_row, struct matrix_list_entry
                 E(matrix, 2, 1) = magic_number;
                 continue;
             }
-            if (sum_of_row(matrix, 2) != magic_number)
+            if (sum_of_row(matrix, 2) > magic_number) {
+                E(matrix, 2, 0) = magic_number;
+                continue;
+            } else if (sum_of_row(matrix, 2) < magic_number)
+                E(matrix, 2, 0) = magic_number - E(matrix, 2, 1) - E(matrix, 2, 2) - E(matrix, 2, 3) - 1;
                 continue;
             if (strict) {
                 if (E(matrix, 1, 1) + E(matrix, 1, 2) + E(matrix, 2, 1) + E(matrix, 2, 2) != magic_number)
@@ -226,7 +226,11 @@ int find_magic_squares(int magic_number, int *seed_row, struct matrix_list_entry
                     E(matrix, 3, 0) = E(matrix, 0, 3);
                     continue;
                 }
-                if (sum_of_row(matrix, 3) != magic_number)
+                if (sum_of_row(matrix, 3) > magic_number) {
+                    E(matrix, 3, 0) = magic_number;
+                    continue;
+                } else if (sum_of_row(matrix, 3) < magic_number)
+                    E(matrix, 3, 0) = magic_number - E(matrix, 3, 1) - E(matrix, 3, 2) - E(matrix, 3, 3) - 1;
                     continue;
                 if (strict) {
                     if (E(matrix, 2, 0) + E(matrix, 2, 1) + E(matrix, 3, 0) + E(matrix, 3, 1) != magic_number)
