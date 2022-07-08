@@ -124,8 +124,16 @@ int find_magic_squares(int magic_number, int *seed_row, struct matrix_list_entry
     matrix[2] = seed_row[2];
     matrix[3] = seed_row[3];
     while (increment_row(matrix, 1, magic_number) == 0) {
+        /* Third column */
         if (E(matrix, 0, 3) + E(matrix, 1, 3) > magic_number)
             break;
+        if (strict > 1) {
+            /* Breakable taurus diagonals */
+            if (E(matrix, 0, 2) + E(matrix, 1, 3) > magic_number
+                    || E(matrix, 0, 0) + E(matrix, 1, 3) > magic_number)
+                break;
+        }
+        /* Remaining columns */
         if (E(matrix, 0, 2) + E(matrix, 1, 2) > magic_number) {
             E(matrix, 1, 0) = magic_number;
             E(matrix, 1, 1) = magic_number;
@@ -161,7 +169,17 @@ int find_magic_squares(int magic_number, int *seed_row, struct matrix_list_entry
             E(matrix, 1, 0) = magic_number - E(matrix, 1, 1) - E(matrix, 1, 2) - E(matrix, 1, 3) - 1;
             continue;
         }
-        if (strict) {
+        if (strict > 1) {
+            /* Taurus diagonals */
+            if (E(matrix, 0, 1) + E(matrix, 1, 2) > magic_number
+                    /* || E(matrix, 0, 2) + E(matrix, 1, 3) > magic_number */
+                    || E(matrix, 0, 3) + E(matrix, 1, 0) > magic_number
+                    /* || E(matrix, 0, 0) + E(matrix, 1, 3) > magic_number */
+                    || E(matrix, 0, 1) + E(matrix, 1, 0) > magic_number
+                    || E(matrix, 0, 2) + E(matrix, 1, 1) > magic_number)
+                continue;
+        } else if (strict == 1) {
+            /* Quadrants */
             if (E(matrix, 0, 0) + E(matrix, 0, 1) + E(matrix, 1, 0) + E(matrix, 1, 1) != magic_number)
                 continue;
             if (E(matrix, 0, 2) + E(matrix, 0, 3) + E(matrix, 1, 2) + E(matrix, 1, 3) != magic_number)
@@ -171,8 +189,16 @@ int find_magic_squares(int magic_number, int *seed_row, struct matrix_list_entry
             continue;
         reset_row(matrix, 2);
         while (increment_row(matrix, 2, magic_number) == 0) {
+            /* Third column */
             if (E(matrix, 0, 3) + E(matrix, 1, 3) + E(matrix, 2, 3) > magic_number)
                 break;
+            if (strict > 1) {
+                /* Breakable taurus diagonals */
+                if (E(matrix, 0, 1) + E(matrix, 1, 2) + E(matrix, 2, 3) > magic_number
+                        || E(matrix, 0, 1) + E(matrix, 1, 0) + E(matrix, 2, 3) > magic_number)
+                    break;
+            }
+            /* Remaining columns */
             if (E(matrix, 0, 2) + E(matrix, 1, 2) + E(matrix, 2, 2) > magic_number) {
                 E(matrix, 2, 0) = magic_number;
                 E(matrix, 2, 1) = magic_number;
@@ -208,7 +234,17 @@ int find_magic_squares(int magic_number, int *seed_row, struct matrix_list_entry
                 E(matrix, 2, 0) = magic_number - E(matrix, 2, 1) - E(matrix, 2, 2) - E(matrix, 2, 3) - 1;
                 continue;
             }
-            if (strict) {
+            if (strict > 1) {
+                /* Taurus diagonals */
+                if (/* E(matrix, 0, 1) + E(matrix, 1, 2) + E(matrix, 2, 3) > magic_number */
+                           E(matrix, 0, 2) + E(matrix, 1, 3) + E(matrix, 2, 0) > magic_number
+                        || E(matrix, 0, 3) + E(matrix, 1, 0) + E(matrix, 2, 1) > magic_number
+                        || E(matrix, 0, 0) + E(matrix, 1, 3) + E(matrix, 2, 2) > magic_number
+                        /* || E(matrix, 0, 1) + E(matrix, 1, 0) + E(matrix, 2, 3) > magic_number */
+                        || E(matrix, 0, 2) + E(matrix, 1, 1) + E(matrix, 2, 0) > magic_number)
+                    continue;
+            } else if (strict == 1) {
+                /* Quadrants */
                 if (E(matrix, 1, 1) + E(matrix, 1, 2) + E(matrix, 2, 1) + E(matrix, 2, 2) != magic_number)
                     continue;
             }
@@ -218,6 +254,17 @@ int find_magic_squares(int magic_number, int *seed_row, struct matrix_list_entry
             /* delete diagonal and rotational symmetry by forcing top left corner smallest */
             E(matrix, 3, 3) = E(matrix, 0, 0) + 1;
             while (increment_row(matrix, 3, magic_number) == 0) {
+                /* Third column */
+                if (sum_of_col(matrix, 3) > magic_number)
+                    break;
+                /* Breakable diagonal from top left */
+                if (E(matrix, 0, 0) + E(matrix, 1, 1) + E(matrix, 2, 2) + E(matrix, 3, 3) > magic_number)
+                    break;
+                if (strict > 1) {
+                    /* Breakable taurus diagonals */
+                    if (E(matrix, 0, 2) + E(matrix, 1, 1) + E(matrix, 2, 0) + E(matrix, 3, 3) > magic_number)
+                        break;
+                }
                 /* delete vertical symmetry by forcing top left corner smallest */
                 if (E(matrix, 0, 0) > E(matrix, 3, 0)) {
                     E(matrix, 3, 0) = E(matrix, 0, 0);
@@ -235,7 +282,17 @@ int find_magic_squares(int magic_number, int *seed_row, struct matrix_list_entry
                     E(matrix, 3, 0) = magic_number - E(matrix, 3, 1) - E(matrix, 3, 2) - E(matrix, 3, 3) - 1;
                     continue;
                 }
-                if (strict) {
+                if (strict > 1) {
+                    /* Taurus diagonals */
+                    if (E(matrix, 0, 1) + E(matrix, 1, 2) + E(matrix, 2, 3) + E(matrix, 3, 0) != magic_number
+                            || E(matrix, 0, 2) + E(matrix, 1, 3) + E(matrix, 2, 0) + E(matrix, 3, 1) != magic_number
+                            || E(matrix, 0, 3) + E(matrix, 1, 0) + E(matrix, 2, 1) + E(matrix, 3, 2) != magic_number
+                            || E(matrix, 0, 0) + E(matrix, 1, 3) + E(matrix, 2, 2) + E(matrix, 3, 1) != magic_number
+                            || E(matrix, 0, 1) + E(matrix, 1, 0) + E(matrix, 2, 3) + E(matrix, 3, 2) != magic_number
+                            || E(matrix, 0, 2) + E(matrix, 1, 1) + E(matrix, 2, 0) + E(matrix, 3, 3) != magic_number)
+                        continue;
+                } else if (strict == 1) {
+                    /* Quadrants */
                     if (E(matrix, 2, 0) + E(matrix, 2, 1) + E(matrix, 3, 0) + E(matrix, 3, 1) != magic_number)
                         continue;
                     if (E(matrix, 2, 2) + E(matrix, 2, 3) + E(matrix, 3, 2) + E(matrix, 3, 3) != magic_number)
@@ -282,7 +339,8 @@ char *USAGE = "USAGE: %s [-h] [-m NUMBER] [-p] [-s]\n"
 "   -m NUMBER   use NUMBER as the magic number\n"
 "   -o OUTFILE  write results to the following output file -- default is stdout\n"
 "   -p          only allow positive (non-zero) numbers -- default allows 0\n"
-"   -s          strict, where quadrants and the center must also add to the magic number\n";
+"   -s          strict, where quadrants and the center must also add to the magic number\n"
+"   -S          very strict, where diagonals on the square as a taurus must also add to the magic number\n";
 
 int main(int argc, char **argv) {
     int magic_number = 33;
@@ -297,7 +355,7 @@ int main(int argc, char **argv) {
     char *outfilename = NULL;
     FILE *outfile = NULL;
     int strict = 0;
-    while ((opt = getopt(argc, argv, "hm:o:ps")) != -1) {
+    while ((opt = getopt(argc, argv, "hm:o:psS")) != -1) {
         switch (opt) {
             case 'h':
                 fprintf(stderr, USAGE, argv[0]);
@@ -312,7 +370,10 @@ int main(int argc, char **argv) {
                 START_NUM = 1;
                 break;
             case 's':
-                strict = 1;
+                strict |= 1;
+                break;
+            case 'S':
+                strict |= 2;
                 break;
             default:
                 fprintf(stderr, USAGE, argv[0]);
