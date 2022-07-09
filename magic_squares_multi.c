@@ -239,13 +239,13 @@ int find_magic_squares(int magic_number, int *seed_row, struct square_list_entry
                 E(square, 2, 0) = magic_number - E(square, 2, 1) - E(square, 2, 2) - E(square, 2, 3) - 1;
                 continue;
             }
-            /* Delete vertical summetry by forcing top left < bottom left */
+            /* Delete vertical symmetry by forcing top left < bottom left */
             if (E(square, 0, 0) > E(square, 3, 0))
                 continue;
-            /* Delete diagonal summetry by forcing top right < bottom left */
+            /* Delete diagonal symmetry by forcing top right < bottom left */
             if (E(square, 0, 3) > E(square, 3, 0))
                 continue;
-            /* Delete diagonal summetry by forcing top left < bottom right */
+            /* Delete diagonal symmetry by forcing top left < bottom right */
             if (E(square, 0, 0) > E(square, 3, 3))
                 continue;
             if (sum_of_row(square, 3) != magic_number
