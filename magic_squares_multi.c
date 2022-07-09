@@ -130,6 +130,7 @@ int find_magic_squares(int magic_number, int *seed_row, struct square_list_entry
     int magic_square_count = 0;
     struct square_list_entry *tmp, *tail = NULL;
     int square[SIZE*SIZE] = {START_NUM, START_NUM, START_NUM, START_NUM, START_NUM, START_NUM, START_NUM, START_NUM, START_NUM, START_NUM, START_NUM, START_NUM, START_NUM, START_NUM, START_NUM, START_NUM};
+    *square_list = NULL;
     square[0] = seed_row[0];
     square[1] = seed_row[1];
     square[2] = seed_row[2];
