@@ -86,27 +86,19 @@ int duplicates_exist_in_row(int *matrix, int size) {
     return 0;
 }
 
-int rows_duplicates_exist(struct row_list_entry **rows, int row_count, int magic_number) {
-    /* Checks whether duplicates exist by using a radix-style set with an */
-    /* entry for each number from 0 to magic_number, which is fine so long */
-    /* as magic_number is reasonably small (less than 512, for example) */
-    int i, j, value;
-    int *row;
-    int *set = calloc(magic_number + 1, sizeof(char));  /* calloc zeroes memory */
-    assert(set != NULL);
-    for (i = 0; i < row_count; i++) {
-        row = rows[i]->row;
-        for (j = 0; j < SIZE; j++) {
-            value = row[j];
-            if (set[value] == 0) {
-                set[value] = 1;
-            } else {
-                free(set);
-                return 1;
+int rows_duplicates_exist(struct row_list_entry **rows, int row_count, int size) {
+    /* Assumes no duplicates within a given row */
+    /* Assumes rows prior to final row have no duplicates */
+    int i, j, k, value;
+    for (i = 0; i < size; i++) {
+        value = rows[row_count - 1]->row[i];
+        for (j = 0; j < row_count - 1; j++) {
+            for (k = 0; k < size; k++) {
+                if (rows[j]->row[k] == value)
+                    return 1;
             }
         }
     }
-    free(set);
     return 0;
 }
 
@@ -184,7 +176,7 @@ int find_magic_squares(int magic_number, struct row_list_entry *row_list, struct
         /* Diagonal from top right */
         if (rows[0]->row[3] + rows[1]->row[2] > magic_number)
             continue;
-        if (rows_duplicates_exist(rows, 2, magic_number))
+        if (rows_duplicates_exist(rows, 2, SIZE))
             continue;
         for (rows[2] = row_list; rows[2] != NULL; rows[2] = rows[2]->next) {
             /* Third column */
@@ -218,7 +210,7 @@ int find_magic_squares(int magic_number, struct row_list_entry *row_list, struct
             /* Diagonal from top right */
             if (rows[0]->row[3] + rows[1]->row[2] + rows[2]->row[1] > magic_number)
                 continue;
-            if (rows_duplicates_exist(rows, 3, magic_number))
+            if (rows_duplicates_exist(rows, 3, SIZE))
                 continue;
             for (rows[3] = row_list; rows[3] != NULL; rows[3] = rows[3]->next) {
                 /* Third column */
@@ -253,9 +245,9 @@ int find_magic_squares(int magic_number, struct row_list_entry *row_list, struct
                     continue;
                 /* Columns correct */
                 if (rows[0]->row[3] + rows[1]->row[3] + rows[2]->row[3] + rows[3]->row[3] != magic_number
-                        || rows[0]->row[2] + rows[1]->row[2] + rows[2]->row[2] + rows[3]->[2] != magic_number
-                        || rows[0]->row[1] + rows[1]->row[1] + rows[2]->row[1] + rows[3]->[1] != magic_number
-                        || rows[0]->row[0] + rows[1]->row[0] + rows[2]->row[0] + rows[3]->[0] != magic_number)
+                        || rows[0]->row[2] + rows[1]->row[2] + rows[2]->row[2] + rows[3]->row[2] != magic_number
+                        || rows[0]->row[1] + rows[1]->row[1] + rows[2]->row[1] + rows[3]->row[1] != magic_number
+                        || rows[0]->row[0] + rows[1]->row[0] + rows[2]->row[0] + rows[3]->row[0] != magic_number)
                     continue;
                 /* Diagonal from top left */
                 if (rows[0]->row[0] + rows[1]->row[1] + rows[2]->row[2] + rows[3]->row[3] != magic_number)
@@ -263,7 +255,7 @@ int find_magic_squares(int magic_number, struct row_list_entry *row_list, struct
                 /* Diagonal from top right */
                 if (rows[0]->row[3] + rows[1]->row[2] + rows[2]->row[1] + rows[3]->row[0] != magic_number)
                     continue;
-                if (rows_duplicates_exist(rows, 4, magic_number))
+                if (rows_duplicates_exist(rows, 4, SIZE))
                     continue;
                 /* If made it here, this is a valid magic square */
                 tmp = malloc(sizeof(struct matrix_list_entry));
