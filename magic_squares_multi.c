@@ -127,7 +127,7 @@ void compute_rows(int magic_number, struct row_list_entry **row_list, int *count
 }
 
 int find_magic_squares(int magic_number, int *seed_row, struct square_list_entry **square_list, int strict) {
-    int magic_square_count = 0;
+    int magic_square_count = 0, tmp_sum;
     struct square_list_entry *tmp, *tail = NULL;
     int square[SIZE*SIZE] = {START_NUM, START_NUM, START_NUM, START_NUM, START_NUM, START_NUM, START_NUM, START_NUM, START_NUM, START_NUM, START_NUM, START_NUM, START_NUM, START_NUM, START_NUM, START_NUM};
     *square_list = NULL;
@@ -137,38 +137,38 @@ int find_magic_squares(int magic_number, int *seed_row, struct square_list_entry
     square[3] = seed_row[3];
     while (increment_row(square, 1, magic_number) == 0) {
         /* Third column */
-        if (E(square, 0, 3) + E(square, 1, 3) > magic_number)
+        if (E(square, 0, 3) + E(square, 1, 3) + START_NUM + START_NUM > magic_number)
             break;
         if (strict & 2) {
             /* Breakable taurus diagonals */
-            if (E(square, 0, 2) + E(square, 1, 3) > magic_number
-                    || E(square, 0, 0) + E(square, 1, 3) > magic_number)
+            if (E(square, 0, 2) + E(square, 1, 3) + START_NUM + START_NUM > magic_number
+                    || E(square, 0, 0) + E(square, 1, 3) + START_NUM + START_NUM > magic_number)
                 break;
         }
         /* Remaining columns */
-        if (E(square, 0, 2) + E(square, 1, 2) > magic_number) {
+        if (E(square, 0, 2) + E(square, 1, 2) + START_NUM + START_NUM > magic_number) {
             E(square, 1, 0) = magic_number;
             E(square, 1, 1) = magic_number;
             E(square, 1, 2) = magic_number;
             continue;
         }
-        if (E(square, 0, 1) + E(square, 1, 1) > magic_number) {
+        if (E(square, 0, 1) + E(square, 1, 1) + START_NUM + START_NUM > magic_number) {
             E(square, 1, 0) = magic_number;
             E(square, 1, 1) = magic_number;
             continue;
         }
-        if (E(square, 0, 0) + E(square, 1, 0) > magic_number) {
+        if (E(square, 0, 0) + E(square, 1, 0) + START_NUM + START_NUM > magic_number) {
             E(square, 1, 0) = magic_number;
             continue;
         }
         /* Diagonal from top left */
-        if (E(square, 0, 0) + E(square, 1, 1) > magic_number) {
+        if (E(square, 0, 0) + E(square, 1, 1) + START_NUM + START_NUM > magic_number) {
             E(square, 1, 0) = magic_number;
             E(square, 1, 1) = magic_number;
             continue;
         }
         /* Diagonal from top right */
-        if (E(square, 0, 3) + E(square, 1, 2) > magic_number) {
+        if (E(square, 0, 3) + E(square, 1, 2) + START_NUM + START_NUM > magic_number) {
             E(square, 1, 0) = magic_number;
             E(square, 1, 1) = magic_number;
             E(square, 1, 2) = magic_number;
@@ -183,12 +183,12 @@ int find_magic_squares(int magic_number, int *seed_row, struct square_list_entry
         }
         if (strict & 2) {
             /* Taurus diagonals */
-            if (E(square, 0, 1) + E(square, 1, 2) > magic_number
-                    /* || E(square, 0, 2) + E(square, 1, 3) > magic_number */
-                    || E(square, 0, 3) + E(square, 1, 0) > magic_number
-                    /* || E(square, 0, 0) + E(square, 1, 3) > magic_number */
-                    || E(square, 0, 1) + E(square, 1, 0) > magic_number
-                    || E(square, 0, 2) + E(square, 1, 1) > magic_number)
+            if (E(square, 0, 1) + E(square, 1, 2) + START_NUM + START_NUM > magic_number
+                    /* || E(square, 0, 2) + E(square, 1, 3) + START_NUM + START_NUM > magic_number */
+                    || E(square, 0, 3) + E(square, 1, 0) + START_NUM + START_NUM > magic_number
+                    /* || E(square, 0, 0) + E(square, 1, 3) + START_NUM + START_NUM > magic_number */
+                    || E(square, 0, 1) + E(square, 1, 0) + START_NUM + START_NUM > magic_number
+                    || E(square, 0, 2) + E(square, 1, 1) + START_NUM + START_NUM > magic_number)
                 continue;
         }
         if (strict & 1) {
@@ -202,44 +202,36 @@ int find_magic_squares(int magic_number, int *seed_row, struct square_list_entry
             continue;
         reset_row(square, 2);
         while (increment_row(square, 2, magic_number) == 0) {
+            /* Once third row is set and valid, fourth can be determined */
             /* Third column */
-            if (E(square, 0, 3) + E(square, 1, 3) + E(square, 2, 3) > magic_number)
+            if ((tmp_sum = E(square, 0, 3) + E(square, 1, 3) + E(square, 2, 3)) + START_NUM > magic_number)
                 break;
+            E(square, 3, 3) = magic_number - tmp_sum;
             if (strict & 2) {
                 /* Breakable taurus diagonals */
-                if (E(square, 0, 1) + E(square, 1, 2) + E(square, 2, 3) > magic_number
-                        || E(square, 0, 1) + E(square, 1, 0) + E(square, 2, 3) > magic_number)
+                if (E(square, 0, 1) + E(square, 1, 2) + E(square, 2, 3) + START_NUM > magic_number
+                        || E(square, 0, 1) + E(square, 1, 0) + E(square, 2, 3) + START_NUM > magic_number)
                     break;
             }
             /* Remaining columns */
-            if (E(square, 0, 2) + E(square, 1, 2) + E(square, 2, 2) > magic_number) {
+            if ((tmp_sum = E(square, 0, 2) + E(square, 1, 2) + E(square, 2, 2)) + START_NUM > magic_number) {
                 E(square, 2, 0) = magic_number;
                 E(square, 2, 1) = magic_number;
                 E(square, 2, 2) = magic_number;
                 continue;
             }
-            if (E(square, 0, 1) + E(square, 1, 1) + E(square, 2, 1) > magic_number) {
+            E(square, 3, 2) = magic_number - tmp_sum;
+            if ((tmp_sum = E(square, 0, 1) + E(square, 1, 1) + E(square, 2, 1)) + START_NUM > magic_number) {
                 E(square, 2, 0) = magic_number;
                 E(square, 2, 1) = magic_number;
                 continue;
             }
-            if (E(square, 0, 0) + E(square, 1, 0) + E(square, 2, 0) > magic_number) {
+            E(square, 3, 1) = magic_number - tmp_sum;
+            if ((tmp_sum = E(square, 0, 0) + E(square, 1, 0) + E(square, 2, 0)) + START_NUM > magic_number) {
                 E(square, 2, 0) = magic_number;
                 continue;
             }
-            /* Diagonal from top left */
-            if (E(square, 0, 0) + E(square, 1, 1) + E(square, 2, 2) > magic_number) {
-                E(square, 2, 0) = magic_number;
-                E(square, 2, 1) = magic_number;
-                E(square, 2, 2) = magic_number;
-                continue;
-            }
-            /* Diagonal from top right */
-            if (E(square, 0, 3) + E(square, 1, 2) + E(square, 2, 1) > magic_number) {
-                E(square, 2, 0) = magic_number;
-                E(square, 2, 1) = magic_number;
-                continue;
-            }
+            E(square, 3, 0) = magic_number - tmp_sum;
             if (sum_of_row(square, 2) > magic_number) {
                 E(square, 2, 0) = magic_number;
                 continue;
@@ -247,86 +239,47 @@ int find_magic_squares(int magic_number, int *seed_row, struct square_list_entry
                 E(square, 2, 0) = magic_number - E(square, 2, 1) - E(square, 2, 2) - E(square, 2, 3) - 1;
                 continue;
             }
+            /* Delete vertical summetry by forcing top left < bottom left */
+            if (E(square, 0, 0) > E(square, 3, 0))
+                continue;
+            /* Delete diagonal summetry by forcing top right < bottom left */
+            if (E(square, 0, 3) > E(square, 3, 0))
+                continue;
+            /* Delete diagonal summetry by forcing top left < bottom right */
+            if (E(square, 0, 0) > E(square, 3, 3))
+                continue;
+            if (sum_of_row(square, 3) != magic_number
+                    || !diagonals_correct(square, magic_number))
+                continue;
             if (strict & 2) {
                 /* Taurus diagonals */
-                if (/* E(square, 0, 1) + E(square, 1, 2) + E(square, 2, 3) > magic_number */
-                           E(square, 0, 2) + E(square, 1, 3) + E(square, 2, 0) > magic_number
-                        || E(square, 0, 3) + E(square, 1, 0) + E(square, 2, 1) > magic_number
-                        || E(square, 0, 0) + E(square, 1, 3) + E(square, 2, 2) > magic_number
-                        /* || E(square, 0, 1) + E(square, 1, 0) + E(square, 2, 3) > magic_number */
-                        || E(square, 0, 2) + E(square, 1, 1) + E(square, 2, 0) > magic_number)
+                if (E(square, 0, 1) + E(square, 1, 2) + E(square, 2, 3) + E(square, 3, 0) != magic_number
+                        || E(square, 0, 2) + E(square, 1, 3) + E(square, 2, 0) + E(square, 3, 1) != magic_number
+                        || E(square, 0, 3) + E(square, 1, 0) + E(square, 2, 1) + E(square, 3, 2) != magic_number
+                        || E(square, 0, 0) + E(square, 1, 3) + E(square, 2, 2) + E(square, 3, 1) != magic_number
+                        || E(square, 0, 1) + E(square, 1, 0) + E(square, 2, 3) + E(square, 3, 2) != magic_number
+                        || E(square, 0, 2) + E(square, 1, 1) + E(square, 2, 0) + E(square, 3, 3) != magic_number)
                     continue;
             }
             if (strict & 1) {
                 /* Quadrants */
-                if (E(square, 1, 1) + E(square, 1, 2) + E(square, 2, 1) + E(square, 2, 2) != magic_number)
+                if (E(square, 1, 1) + E(square, 1, 2) + E(square, 2, 1) + E(square, 2, 2) != magic_number
+                        || E(square, 2, 0) + E(square, 2, 1) + E(square, 3, 0) + E(square, 3, 1) != magic_number
+                        || E(square, 2, 2) + E(square, 2, 3) + E(square, 3, 2) + E(square, 3, 3) != magic_number)
                     continue;
             }
-            if (duplicates_exist(square, 12))
+            if (duplicates_exist(square, 16))
                 continue;
-            reset_row(square, 3);
-            /* delete diagonal and rotational symmetry by forcing top left corner smallest */
-            E(square, 3, 3) = E(square, 0, 0) + 1;
-            while (increment_row(square, 3, magic_number) == 0) {
-                /* Third column */
-                if (sum_of_col(square, 3) > magic_number)
-                    break;
-                /* Breakable diagonal from top left */
-                if (E(square, 0, 0) + E(square, 1, 1) + E(square, 2, 2) + E(square, 3, 3) > magic_number)
-                    break;
-                if (strict & 2) {
-                    /* Breakable taurus diagonals */
-                    if (E(square, 0, 2) + E(square, 1, 1) + E(square, 2, 0) + E(square, 3, 3) > magic_number)
-                        break;
-                }
-                /* delete vertical symmetry by forcing top left corner smallest */
-                if (E(square, 0, 0) > E(square, 3, 0)) {
-                    E(square, 3, 0) = E(square, 0, 0);
-                    continue;
-                }
-                /* delete diagonal symmetry by forcing top right < bottom left */
-                if (E(square, 0, 3) > E(square, 3, 0)) {
-                    E(square, 3, 0) = E(square, 0, 3);
-                    continue;
-                }
-                if (sum_of_row(square, 3) > magic_number) {
-                    E(square, 3, 0) = magic_number;
-                    continue;
-                } else if (sum_of_row(square, 3) < magic_number) {
-                    E(square, 3, 0) = magic_number - E(square, 3, 1) - E(square, 3, 2) - E(square, 3, 3) - 1;
-                    continue;
-                }
-                if (strict & 2) {
-                    /* Taurus diagonals */
-                    if (E(square, 0, 1) + E(square, 1, 2) + E(square, 2, 3) + E(square, 3, 0) != magic_number
-                            || E(square, 0, 2) + E(square, 1, 3) + E(square, 2, 0) + E(square, 3, 1) != magic_number
-                            || E(square, 0, 3) + E(square, 1, 0) + E(square, 2, 1) + E(square, 3, 2) != magic_number
-                            || E(square, 0, 0) + E(square, 1, 3) + E(square, 2, 2) + E(square, 3, 1) != magic_number
-                            || E(square, 0, 1) + E(square, 1, 0) + E(square, 2, 3) + E(square, 3, 2) != magic_number
-                            || E(square, 0, 2) + E(square, 1, 1) + E(square, 2, 0) + E(square, 3, 3) != magic_number)
-                        continue;
-                }
-                if (strict & 1) {
-                    /* Quadrants */
-                    if (E(square, 2, 0) + E(square, 2, 1) + E(square, 3, 0) + E(square, 3, 1) != magic_number)
-                        continue;
-                    if (E(square, 2, 2) + E(square, 2, 3) + E(square, 3, 2) + E(square, 3, 3) != magic_number)
-                        continue;
-                }
-                if (duplicates_exist(square, 16))
-                    continue;
-                if (columns_correct(square, magic_number) && diagonals_correct(square, magic_number)) {
-                    tmp = malloc(sizeof(struct square_list_entry));
-                    memcpy(tmp->square, square, sizeof(int) * SIZE*SIZE);
-                    tmp->next = NULL;
-                    if (*square_list == NULL)
-                        *square_list = tmp;
-                    else
-                        tail->next = tmp;
-                    tail = tmp;
-                    magic_square_count++;
-                }
-            }
+            /* If made it here, everything is correct */
+            tmp = malloc(sizeof(struct square_list_entry));
+            memcpy(tmp->square, square, sizeof(int) * SIZE*SIZE);
+            tmp->next = NULL;
+            if (*square_list == NULL)
+                *square_list = tmp;
+            else
+                tail->next = tmp;
+            tail = tmp;
+            magic_square_count++;
         }
     }
     return magic_square_count;
