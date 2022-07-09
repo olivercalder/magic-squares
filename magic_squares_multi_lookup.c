@@ -17,9 +17,14 @@ struct row_list_entry {
     struct row_list_entry *next_seed;
 };
 
-struct matrix_list_entry {
-    int matrix[SIZE*SIZE];
-    struct matrix_list_entry *next;
+struct square_list_entry {
+    int square[SIZE*SIZE];
+    struct square_list_entry *next;
+};
+
+struct square_list {
+    struct square_list_entry *squares;
+    struct square_list *next;
 };
 
 struct thread_info {
@@ -31,7 +36,7 @@ struct thread_info {
     int magic_square_count;
     struct row_list_entry *row_list;
     struct row_list_entry *seed_list;
-    struct matrix_list_entry *matrix_list;
+    struct square_list *square_lists;
 };
 
 int increment_row(int *row, int magic_number) {
@@ -53,39 +58,39 @@ int increment_row(int *row, int magic_number) {
     return 1;
 }
 
-void print_magic_square(int *matrix, FILE *outfile) {
+void print_magic_square(int *square, FILE *outfile) {
     int i;
     for (i = 0; i < 4; i++)
-        fprintf(outfile, "%d %d %d %d\n", E(matrix, i, 0), E(matrix, i, 1), E(matrix, i, 2), E(matrix, i, 3));
+        fprintf(outfile, "%d %d %d %d\n", E(square, i, 0), E(square, i, 1), E(square, i, 2), E(square, i, 3));
     fprintf(outfile, "\n");
 }
 
-int sum_of_row(int *matrix, int row) {
-    return E(matrix, row, 0) + E(matrix, row, 1) + E(matrix, row, 2) + E(matrix, row, 3);
+int sum_of_row(int *square, int row) {
+    return E(square, row, 0) + E(square, row, 1) + E(square, row, 2) + E(square, row, 3);
 }
 
-int sum_of_col(int *matrix, int col) {
-    return E(matrix, 0, col) + E(matrix, 1, col) + E(matrix, 2, col) + E(matrix, 3, col);
+int sum_of_col(int *square, int col) {
+    return E(square, 0, col) + E(square, 1, col) + E(square, 2, col) + E(square, 3, col);
 }
 
-int columns_correct(int *matrix, int magic_number) {
-    return sum_of_col(matrix, 0) == magic_number
-        && sum_of_col(matrix, 1) == magic_number
-        && sum_of_col(matrix, 2) == magic_number
-        && sum_of_col(matrix, 3) == magic_number;
+int columns_correct(int *square, int magic_number) {
+    return sum_of_col(square, 0) == magic_number
+        && sum_of_col(square, 1) == magic_number
+        && sum_of_col(square, 2) == magic_number
+        && sum_of_col(square, 3) == magic_number;
 }
 
-int diagonals_correct(int *matrix, int magic_number) {
-    return (E(matrix, 0, 0) + E(matrix, 1, 1) + E(matrix, 2, 2) + E(matrix, 3, 3) == magic_number
-            && E(matrix, 0, 3) + E(matrix, 1, 2) + E(matrix, 2, 1) + E(matrix, 3, 0) == magic_number);
+int diagonals_correct(int *square, int magic_number) {
+    return (E(square, 0, 0) + E(square, 1, 1) + E(square, 2, 2) + E(square, 3, 3) == magic_number
+            && E(square, 0, 3) + E(square, 1, 2) + E(square, 2, 1) + E(square, 3, 0) == magic_number);
 }
 
-int duplicates_exist_in_row(int *matrix, int size) {
+int duplicates_exist_in_row(int *row, int size) {
     int i = 0;
     int j = 1;
     for (i = 0; i < size - 1; i++)
         for (j = i + 1; j < size; j++)
-            if (matrix[i] == matrix[j])
+            if (row[i] == row[j])
                 return 1;
     return 0;
 }
@@ -148,10 +153,11 @@ void compute_rows(int magic_number, struct row_list_entry **row_list, struct row
     }
 }
 
-int find_magic_squares(int magic_number, int size, struct row_list_entry *row_list, struct row_list_entry *seed_row, struct matrix_list_entry **matrix_list, int strict) {
+int find_magic_squares(int magic_number, int size, struct row_list_entry *row_list, struct row_list_entry *seed_row, struct square_list_entry **square_list, int strict) {
     int i, magic_square_count = 0;
-    struct matrix_list_entry *tmp;
     struct row_list_entry *rows[4];
+    struct square_list_entry *tmp, *tail = NULL;
+    *square_list = NULL;
     rows[0] = seed_row;
     for (rows[1] = row_list; rows[1] != NULL; rows[1] = rows[1]->next) {
         /* Third column */
@@ -268,11 +274,15 @@ int find_magic_squares(int magic_number, int size, struct row_list_entry *row_li
                 if (rows_duplicates_exist(rows, 4, size))
                     continue;
                 /* If made it here, this is a valid magic square */
-                tmp = malloc(sizeof(struct matrix_list_entry));
+                tmp = malloc(sizeof(struct square_list_entry));
                 for (i = 0; i < size; i++)
-                    memcpy(&(tmp->matrix[i * size]), rows[i]->row, sizeof(int) * size);
-                tmp->next = *matrix_list;
-                *matrix_list = tmp;
+                    memcpy(&(tmp->square[i * size]), rows[i]->row, sizeof(int) * size);
+                tmp->next = NULL;
+                if (*square_list == NULL)
+                    *square_list = tmp;
+                else
+                    tail->next = tmp;
+                tail = tmp;
                 magic_square_count++;
             }
         }
@@ -283,13 +293,21 @@ int find_magic_squares(int magic_number, int size, struct row_list_entry *row_li
 void *thread_find_magic_squares(void *arg) {
     struct thread_info *info = (struct thread_info *)arg;
     struct row_list_entry *seed_row_entry = info->seed_list;
+    struct square_list *tmp, *tail;
     int i, magic_square_count = 0;
     for (i = 0; i < info->thread_id; i++)
         seed_row_entry = seed_row_entry->next_seed;
     info->magic_square_count = 0;
-    info->matrix_list = NULL;
+    info->square_lists = NULL;
     while (seed_row_entry != NULL) {
-        magic_square_count = find_magic_squares(info->magic_number, info->size, info->row_list, seed_row_entry, &info->matrix_list, info->strict);
+        tmp = malloc(sizeof(struct square_list));
+        tmp->next = NULL;
+        if (info->square_lists == NULL)
+            info->square_lists = tmp;
+        else
+            tail->next = tmp;
+        tail = tmp;
+        magic_square_count = find_magic_squares(info->magic_number, info->size, info->row_list, seed_row_entry, &tail->squares, info->strict);
         info->magic_square_count += magic_square_count;
         if (magic_square_count)
             fprintf(stderr, "Thread %d\tfound %lld additional magic squares from seed row [%d %d %d %d]\n", info->thread_id, magic_square_count, seed_row_entry->row[0], seed_row_entry->row[1], seed_row_entry->row[2], seed_row_entry->row[3]);
@@ -314,11 +332,11 @@ int main(int argc, char **argv) {
     int magic_number = 33;
     struct row_list_entry *row_list, *seed_list;
     int row_count, seed_count, i;
-    void *square_count = 0;
     int total_squares = 0;
     unsigned int num_cores = sysconf(_SC_NPROCESSORS_ONLN);
     struct thread_info *thread_info_array = malloc(sizeof(struct thread_info) * num_cores);
-    struct matrix_list_entry *current;
+    struct square_list_entry *current, *tmp_entry;
+    struct square_list *tmp_list;
     int opt;
     char *outfilename = NULL;
     FILE *outfile = NULL;
@@ -371,12 +389,18 @@ int main(int argc, char **argv) {
         outfile = fopen(outfilename, "w");
     else
         outfile = stdout;
-    for (i = 0; i < num_cores; i++) {
-        current = thread_info_array[i].matrix_list;
+    /* Destructively print magic squares _in order_ across threads */
+    for (i = 0; thread_info_array[i].square_lists != NULL; i = (i + 1) % num_cores) {
+        current = thread_info_array[i].square_lists->squares;
         while (current != NULL) {
-            print_magic_square(current->matrix, outfile);
+            print_magic_square(current->square, outfile);
+            tmp_entry = current;
             current = current->next;
+            free(tmp_entry);
         }
+        tmp_list = thread_info_array[i].square_lists;
+        thread_info_array[i].square_lists = tmp_list->next;
+        free(tmp_list);
     }
     if (outfile != stdout)
         fclose(outfile);
