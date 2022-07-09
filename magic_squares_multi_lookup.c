@@ -325,24 +325,25 @@ void *thread_find_magic_squares(void *arg) {
 char *USAGE = "USAGE: %s [-h] [-m NUMBER] [-p] [-s]\n"
 "   -h          display this help message\n"
 "   -m NUMBER   use NUMBER as the magic number\n"
-"   -o OUTFILE  write results to the following output file -- default is stdout\n"
+"   -o OUTFILE  write results to the output file given by OUTFILE -- default is stdout\n"
 "   -p          only allow positive (non-zero) numbers -- default allows 0\n"
 "   -s          strict, where quadrants and the center must also add to the magic number\n"
-"   -S          very strict, where diagonals on the square as a taurus must also add to the magic number\n";
+"   -S          very strict, where diagonals on the square as a taurus must also add to the magic number\n"
+"   -t THREADS  use THREADS number of execution threads -- default is all available threads\n";
 int main(int argc, char **argv) {
     int magic_number = 33;
     struct row_list_entry *row_list, *seed_list;
     int row_count, seed_count, i;
     int total_squares = 0;
     unsigned int num_cores = sysconf(_SC_NPROCESSORS_ONLN);
-    struct thread_info *thread_info_array = malloc(sizeof(struct thread_info) * num_cores);
+    struct thread_info *thread_info_array;
     struct square_list_entry *current, *tmp_entry;
     struct square_list *tmp_list;
     int opt;
     char *outfilename = NULL;
     FILE *outfile = NULL;
     int strict = 0;
-    while ((opt = getopt(argc, argv, "hm:o:psS")) != -1) {
+    while ((opt = getopt(argc, argv, "hm:o:psSt:")) != -1) {
         switch (opt) {
             case 'h':
                 fprintf(stderr, USAGE, argv[0]);
@@ -362,11 +363,15 @@ int main(int argc, char **argv) {
             case 'S':
                 strict |= 2;
                 break;
+            case 't':
+                num_cores = atoi(optarg);
+                break;
             default:
                 fprintf(stderr, USAGE, argv[0]);
                 exit(1);
         }
     }
+    thread_info_array = malloc(sizeof(struct thread_info) * num_cores);
     compute_rows(magic_number, &row_list, &seed_list, &row_count, &seed_count);
     fprintf(stderr, "Found %d viable rows and %d viable seed rows.\n", row_count, seed_count);
     fprintf(stderr, "Running with %d processing threads.\n\n", num_cores);
