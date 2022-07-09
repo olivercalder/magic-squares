@@ -7,7 +7,7 @@
 
 #define LOGSIZE (2)
 #define SIZE (4)
-#define E(m, r, c) ((m)[((r) << (LOGSIZE)) + (c)])
+#define E(s, r, c) ((s)[((r) << (LOGSIZE)) + (c)])
 
 int START_NUM = 0;
 
@@ -65,24 +65,24 @@ void print_magic_square(int *square, FILE *outfile) {
     fprintf(outfile, "\n");
 }
 
-int sum_of_row(int *square, int row) {
-    return E(square, row, 0) + E(square, row, 1) + E(square, row, 2) + E(square, row, 3);
+int sum_of_row(int *row) {
+    return row[0] + row[1] + row[2] + row[3];
 }
 
-int sum_of_col(int *square, int col) {
-    return E(square, 0, col) + E(square, 1, col) + E(square, 2, col) + E(square, 3, col);
+int sum_of_col(struct row_list_entry *rows, int col) {
+    return rows[0]->row[col] + rows[1]->row[col] + rows[2]->row[col] + rows[3]->row[col];
 }
 
-int columns_correct(int *square, int magic_number) {
-    return sum_of_col(square, 0) == magic_number
-        && sum_of_col(square, 1) == magic_number
-        && sum_of_col(square, 2) == magic_number
-        && sum_of_col(square, 3) == magic_number;
+int columns_correct(struct row_list_entry *rows, int magic_number) {
+    return sum_of_col(rows, 0) == magic_number
+        && sum_of_col(rows, 1) == magic_number
+        && sum_of_col(rows, 2) == magic_number
+        && sum_of_col(rows, 3) == magic_number;
 }
 
-int diagonals_correct(int *square, int magic_number) {
-    return (E(square, 0, 0) + E(square, 1, 1) + E(square, 2, 2) + E(square, 3, 3) == magic_number
-            && E(square, 0, 3) + E(square, 1, 2) + E(square, 2, 1) + E(square, 3, 0) == magic_number);
+int diagonals_correct(struct row_list_entry *rows, int magic_number) {
+    return (rows[0]->row[0] + rows[1]->row[1] + rows[2]->row[2] + rows[3]->row[3] == magic_number
+            && rows[0]->row[3] + rows[1]->row[2] + rows[2]->row[1] + rows[3]->row[0] == magic_number);
 }
 
 int duplicates_exist_in_row(int *row, int size) {
@@ -313,10 +313,8 @@ void *thread_find_magic_squares(void *arg) {
             fprintf(stderr, "Thread %d\tfound %lld additional magic squares from seed row [%d %d %d %d]\n", info->thread_id, magic_square_count, seed_row_entry->row[0], seed_row_entry->row[1], seed_row_entry->row[2], seed_row_entry->row[3]);
         else
             fprintf(stderr, "Thread %d\tfound no magic squares from seed row [%d %d %d %d]\n", info->thread_id, seed_row_entry->row[0], seed_row_entry->row[1], seed_row_entry->row[2], seed_row_entry->row[3]);
-        do {
-            for (i = 0; seed_row_entry != NULL && i < info->total_threads; i++)
-                seed_row_entry = seed_row_entry->next_seed;
-        } while (seed_row_entry != NULL && seed_row_entry->row[0] > seed_row_entry->row[3]);
+        for (i = 0; seed_row_entry != NULL && i < info->total_threads; i++)
+            seed_row_entry = seed_row_entry->next_seed;
     }
     pthread_exit(0);
 }
