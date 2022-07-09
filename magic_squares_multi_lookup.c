@@ -153,11 +153,13 @@ void compute_rows(int magic_number, struct row_list_entry **row_list, struct row
 }
 
 int find_magic_squares(int magic_number, int size, struct row_list_entry *row_list, struct row_list_entry *seed_row, struct square_list_entry **square_list, int strict) {
-    int i, magic_square_count = 0;
+    int i, magic_square_count = 0, tmp_sum;
     struct row_list_entry *rows[4];
+    struct row_list_entry final_row;
     struct square_list_entry *tmp, *tail = NULL;
     *square_list = NULL;
     rows[0] = seed_row;
+    rows[3] = &final_row;
     for (rows[1] = row_list; rows[1] != NULL; rows[1] = rows[1]->next) {
         /* Third column */
         if (rows[0]->row[3] + rows[1]->row[3] + START_NUM + START_NUM > magic_number)
@@ -195,98 +197,74 @@ int find_magic_squares(int magic_number, int size, struct row_list_entry *row_li
         if (rows_duplicates_exist(rows, 2, size))
             continue;
         for (rows[2] = row_list; rows[2] != NULL; rows[2] = rows[2]->next) {
+            /* Once third row is set and valid, fourth can be computed directly */
             /* Third column */
-            if (rows[0]->row[3] + rows[1]->row[3] + rows[2]->row[3] + START_NUM > magic_number)
+            if ((tmp_sum = rows[0]->row[3] + rows[1]->row[3] + rows[2]->row[3]) + START_NUM > magic_number)
                 break;
+            rows[3]->row[3] = magic_number - tmp_sum;
             if (strict & 2) {
                 /* Taurus diagonals */
                 if (rows[0]->row[1] + rows[1]->row[2] + rows[2]->row[3] + START_NUM > magic_number
                         || rows[0]->row[1] + rows[1]->row[0] + rows[2]->row[3] + START_NUM > magic_number)
                     break;
-                if (/* rows[0]->row[1] + rows[1]->row[2] + rows[2]->row[3] + START_NUM > magic_number */
-                           rows[0]->row[2] + rows[1]->row[3] + rows[2]->row[0] + START_NUM > magic_number
-                        || rows[0]->row[3] + rows[1]->row[0] + rows[2]->row[1] + START_NUM > magic_number
-                        || rows[0]->row[0] + rows[1]->row[3] + rows[2]->row[2] + START_NUM > magic_number
-                        /* || rows[0]->row[1] + rows[1]->row[0] + rows[2]->row[3] + START_NUM > magic_number */
-                        || rows[0]->row[2] + rows[1]->row[1] + rows[2]->row[0] + START_NUM > magic_number)
+            }
+            /* Remaining columns */
+            if ((tmp_sum = rows[0]->row[2] + rows[1]->row[2] + rows[2]->row[2]) + START_NUM > magic_number)
+                continue;
+            rows[3]->row[2] = magic_number - tmp_sum;
+            if ((tmp_sum = rows[0]->row[1] + rows[1]->row[1] + rows[2]->row[1]) + START_NUM > magic_number)
+                continue;
+            rows[3]->row[1] = magic_number - tmp_sum;
+            if ((tmp_sum = rows[0]->row[0] + rows[1]->row[0] + rows[2]->row[0]) + START_NUM > magic_number)
+                continue;
+            rows[3]->row[0] = magic_number - tmp_sum;
+            /* Delete vertical symmetry by forcing top left < bottom left */
+            if (rows[0]->row[0] > rows[3]->row[0])
+                continue;
+            /* Delete diagonal symmetry by forcing top right < bottom left */
+            if (rows[0]->row[3] > rows[3]->row[0])
+                continue;
+            /* Delete diagonal symmetry by forcing top left < bottom right */
+            if (rows[0]->row[0] > rows[3]->row[3])
+                continue;
+            if (sum_of_row(rows[3]->row) != magic_number
+                    || duplicates_exist_in_row(rows[3]->row, size))
+                continue;
+            /* Diagonal from top left */
+            if (rows[0]->row[0] + rows[1]->row[1] + rows[2]->row[2] + rows[3]->row[3] != magic_number)
+                continue;
+            /* Diagonal from top right */
+            if (rows[0]->row[3] + rows[1]->row[2] + rows[2]->row[1] + rows[3]->row[0] != magic_number)
+                continue;
+            if (strict & 2) {
+                if (rows[0]->row[1] + rows[1]->row[2] + rows[2]->row[3] + rows[3]->row[0] != magic_number
+                        || rows[0]->row[2] + rows[1]->row[3] + rows[2]->row[0] + rows[3]->row[1] != magic_number
+                        || rows[0]->row[3] + rows[1]->row[0] + rows[2]->row[1] + rows[3]->row[2] != magic_number
+                        || rows[0]->row[0] + rows[1]->row[3] + rows[2]->row[2] + rows[3]->row[1] != magic_number
+                        || rows[0]->row[1] + rows[1]->row[0] + rows[2]->row[3] + rows[3]->row[2] != magic_number
+                        || rows[0]->row[2] + rows[1]->row[1] + rows[2]->row[0] + rows[3]->row[3] != magic_number)
                     continue;
             }
             if (strict & 1) {
                 /* Quadrants */
-                if (rows[1]->row[1] + rows[1]->row[2] + rows[2]->row[1] + rows[2]->row[2] != magic_number)
+                if (rows[1]->row[1] + rows[1]->row[2] + rows[2]->row[1] + rows[2]->row[2] != magic_number
+                        || rows[2]->row[0] + rows[2]->row[1] + rows[3]->row[0] + rows[3]->row[1] != magic_number
+                        || rows[2]->row[2] + rows[2]->row[3] + rows[3]->row[2] + rows[3]->row[3] != magic_number)
                     continue;
             }
-            /* Remaining columns */
-            if (rows[0]->row[2] + rows[1]->row[2] + rows[2]->row[2] + START_NUM > magic_number
-                    || rows[0]->row[1] + rows[1]->row[1] + rows[2]->row[1] + START_NUM > magic_number
-                    || rows[0]->row[0] + rows[1]->row[0] + rows[2]->row[0] + START_NUM > magic_number)
+            if (rows_duplicates_exist(rows, 3, size) || rows_duplicates_exist(rows, 4, size))
                 continue;
-            /* Diagonal from top left */
-            if (rows[0]->row[0] + rows[1]->row[1] + rows[2]->row[2] + START_NUM > magic_number)
-                continue;
-            /* Diagonal from top right */
-            if (rows[0]->row[3] + rows[1]->row[2] + rows[2]->row[1] + START_NUM > magic_number)
-                continue;
-            if (rows_duplicates_exist(rows, 3, size))
-                continue;
-            for (rows[3] = row_list; rows[3] != NULL; rows[3] = rows[3]->next) {
-                /* Third column */
-                if (rows[0]->row[3] + rows[1]->row[3] + rows[2]->row[3] + rows[3]->row[3] > magic_number)
-                    break;
-                /* Breakable diagonal from top left */
-                if (rows[0]->row[0] + rows[1]->row[1] + rows[2]->row[2] + rows[3]->row[3] > magic_number)
-                    break;
-                if (strict & 2) {
-                    /* Breakable taurus diagonal */
-                    if (rows[0]->row[2] + rows[1]->row[1] + rows[2]->row[0] + rows[3]->row[3] > magic_number)
-                        break;
-                    /* Taurus diagonals */
-                    if (rows[0]->row[1] + rows[1]->row[2] + rows[2]->row[3] + rows[3]->row[0] != magic_number
-                            || rows[0]->row[2] + rows[1]->row[3] + rows[2]->row[0] + rows[3]->row[1] != magic_number
-                            || rows[0]->row[3] + rows[1]->row[0] + rows[2]->row[1] + rows[3]->row[2] != magic_number
-                            || rows[0]->row[0] + rows[1]->row[3] + rows[2]->row[2] + rows[3]->row[1] != magic_number
-                            || rows[0]->row[1] + rows[1]->row[0] + rows[2]->row[3] + rows[3]->row[2] != magic_number
-                            || rows[0]->row[2] + rows[1]->row[1] + rows[2]->row[0] + rows[3]->row[3] != magic_number)
-                        continue;
-                }
-                if (strict & 1) {
-                    /* Quadrants */
-                    if (rows[2]->row[0] + rows[2]->row[1] + rows[3]->row[0] + rows[3]->row[1] != magic_number
-                            || rows[2]->row[2] + rows[2]->row[3] + rows[3]->row[2] + rows[3]->row[3] != magic_number)
-                        continue;
-                }
-                /* delete reflectional and rotational symmetry by forcing top */
-                /* left corner smallest and top right < bottom left */
-                if (rows[0]->row[0] > rows[3]->row[3]   /* diagonal and rotational */
-                        || rows[0]->row[0] > rows[3]->row[0]    /* vertical */
-                        || rows[0]->row[3] > rows[3]->row[0])   /* diagonal */
-                    continue;
-                /* Columns correct */
-                if (rows[0]->row[3] + rows[1]->row[3] + rows[2]->row[3] + rows[3]->row[3] != magic_number
-                        || rows[0]->row[2] + rows[1]->row[2] + rows[2]->row[2] + rows[3]->row[2] != magic_number
-                        || rows[0]->row[1] + rows[1]->row[1] + rows[2]->row[1] + rows[3]->row[1] != magic_number
-                        || rows[0]->row[0] + rows[1]->row[0] + rows[2]->row[0] + rows[3]->row[0] != magic_number)
-                    continue;
-                /* Diagonal from top left */
-                if (rows[0]->row[0] + rows[1]->row[1] + rows[2]->row[2] + rows[3]->row[3] != magic_number)
-                    continue;
-                /* Diagonal from top right */
-                if (rows[0]->row[3] + rows[1]->row[2] + rows[2]->row[1] + rows[3]->row[0] != magic_number)
-                    continue;
-                if (rows_duplicates_exist(rows, 4, size))
-                    continue;
-                /* If made it here, this is a valid magic square */
-                tmp = malloc(sizeof(struct square_list_entry));
-                for (i = 0; i < size; i++)
-                    memcpy(&(tmp->square[i * size]), rows[i]->row, sizeof(int) * size);
-                tmp->next = NULL;
-                if (*square_list == NULL)
-                    *square_list = tmp;
-                else
-                    tail->next = tmp;
-                tail = tmp;
-                magic_square_count++;
-            }
+            /* If made it here, this is a valid magic square */
+            tmp = malloc(sizeof(struct square_list_entry));
+            for (i = 0; i < size; i++)
+                memcpy(&(tmp->square[i * size]), rows[i]->row, sizeof(int) * size);
+            tmp->next = NULL;
+            if (*square_list == NULL)
+                *square_list = tmp;
+            else
+                tail->next = tmp;
+            tail = tmp;
+            magic_square_count++;
         }
     }
     return magic_square_count;
