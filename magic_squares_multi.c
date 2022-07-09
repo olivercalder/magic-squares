@@ -319,7 +319,7 @@ int find_magic_squares(int magic_number, int *seed_row, struct square_list_entry
                     tmp = malloc(sizeof(struct square_list_entry));
                     memcpy(tmp->square, square, sizeof(int) * SIZE*SIZE);
                     tmp->next = NULL;
-                    if (*square_list = NULL)
+                    if (*square_list == NULL)
                         *square_list = tmp;
                     else
                         tail->next = tmp;
