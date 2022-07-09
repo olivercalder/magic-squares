@@ -160,19 +160,19 @@ int find_magic_squares(int magic_number, int size, struct row_list_entry *row_li
     rows[0] = seed_row;
     for (rows[1] = row_list; rows[1] != NULL; rows[1] = rows[1]->next) {
         /* Third column */
-        if (rows[0]->row[3] + rows[1]->row[3] > magic_number)
+        if (rows[0]->row[3] + rows[1]->row[3] + START_NUM + START_NUM > magic_number)
             break;
         if (strict & 2) {
             /* Taurus diagonals */
-            if (rows[0]->row[2] + rows[1]->row[3] > magic_number
-                    || rows[0]->row[0] + rows[1]->row[3] > magic_number)
+            if (rows[0]->row[2] + rows[1]->row[3] + START_NUM + START_NUM > magic_number
+                    || rows[0]->row[0] + rows[1]->row[3] + START_NUM + START_NUM > magic_number)
                 break;
-            if (rows[0]->row[1] + rows[1]->row[2] > magic_number
-                    /* || rows[0]->row[2] + rows[1]->row[3] > magic_number */
-                    || rows[0]->row[3] + rows[1]->row[0] > magic_number
-                    /* || rows[0]->row[0] + rows[1]->row[3] > magic_number */
-                    || rows[0]->row[1] + rows[1]->row[0] > magic_number
-                    || rows[0]->row[2] + rows[1]->row[1] > magic_number)
+            if (rows[0]->row[1] + rows[1]->row[2] + START_NUM + START_NUM > magic_number
+                    /* || rows[0]->row[2] + rows[1]->row[3] + START_NUM + START_NUM > magic_number */
+                    || rows[0]->row[3] + rows[1]->row[0] + START_NUM + START_NUM > magic_number
+                    /* || rows[0]->row[0] + rows[1]->row[3] + START_NUM + START_NUM > magic_number */
+                    || rows[0]->row[1] + rows[1]->row[0] + START_NUM + START_NUM > magic_number
+                    || rows[0]->row[2] + rows[1]->row[1] + START_NUM + START_NUM > magic_number)
                 continue;
         }
         if (strict & 1) {
@@ -182,33 +182,33 @@ int find_magic_squares(int magic_number, int size, struct row_list_entry *row_li
                 continue;
         }
         /* Remaining columns */
-        if (rows[0]->row[2] + rows[1]->row[2] > magic_number
-                || rows[0]->row[1] + rows[1]->row[1] > magic_number
-                || rows[0]->row[0] + rows[1]->row[0] > magic_number)
+        if (rows[0]->row[2] + rows[1]->row[2] + START_NUM + START_NUM > magic_number
+                || rows[0]->row[1] + rows[1]->row[1] + START_NUM + START_NUM > magic_number
+                || rows[0]->row[0] + rows[1]->row[0] + START_NUM + START_NUM > magic_number)
             continue;
         /* Diagonal from top left */
-        if (rows[0]->row[0] + rows[1]->row[1] > magic_number)
+        if (rows[0]->row[0] + rows[1]->row[1] + START_NUM + START_NUM > magic_number)
             continue;
         /* Diagonal from top right */
-        if (rows[0]->row[3] + rows[1]->row[2] > magic_number)
+        if (rows[0]->row[3] + rows[1]->row[2] + START_NUM + START_NUM > magic_number)
             continue;
         if (rows_duplicates_exist(rows, 2, size))
             continue;
         for (rows[2] = row_list; rows[2] != NULL; rows[2] = rows[2]->next) {
             /* Third column */
-            if (rows[0]->row[3] + rows[1]->row[3] + rows[2]->row[3] > magic_number)
+            if (rows[0]->row[3] + rows[1]->row[3] + rows[2]->row[3] + START_NUM > magic_number)
                 break;
             if (strict & 2) {
                 /* Taurus diagonals */
-                if (rows[0]->row[1] + rows[1]->row[2] + rows[2]->row[3] > magic_number
-                        || rows[0]->row[1] + rows[1]->row[0] + rows[2]->row[3] > magic_number)
+                if (rows[0]->row[1] + rows[1]->row[2] + rows[2]->row[3] + START_NUM > magic_number
+                        || rows[0]->row[1] + rows[1]->row[0] + rows[2]->row[3] + START_NUM > magic_number)
                     break;
-                if (/* rows[0]->row[1] + rows[1]->row[2] + rows[2]->row[3] > magic_number */
-                           rows[0]->row[2] + rows[1]->row[3] + rows[2]->row[0] > magic_number
-                        || rows[0]->row[3] + rows[1]->row[0] + rows[2]->row[1] > magic_number
-                        || rows[0]->row[0] + rows[1]->row[3] + rows[2]->row[2] > magic_number
-                        /* || rows[0]->row[1] + rows[1]->row[0] + rows[2]->row[3] > magic_number */
-                        || rows[0]->row[2] + rows[1]->row[1] + rows[2]->row[0] > magic_number)
+                if (/* rows[0]->row[1] + rows[1]->row[2] + rows[2]->row[3] + START_NUM > magic_number */
+                           rows[0]->row[2] + rows[1]->row[3] + rows[2]->row[0] + START_NUM > magic_number
+                        || rows[0]->row[3] + rows[1]->row[0] + rows[2]->row[1] + START_NUM > magic_number
+                        || rows[0]->row[0] + rows[1]->row[3] + rows[2]->row[2] + START_NUM > magic_number
+                        /* || rows[0]->row[1] + rows[1]->row[0] + rows[2]->row[3] + START_NUM > magic_number */
+                        || rows[0]->row[2] + rows[1]->row[1] + rows[2]->row[0] + START_NUM > magic_number)
                     continue;
             }
             if (strict & 1) {
@@ -217,15 +217,15 @@ int find_magic_squares(int magic_number, int size, struct row_list_entry *row_li
                     continue;
             }
             /* Remaining columns */
-            if (rows[0]->row[2] + rows[1]->row[2] + rows[2]->row[2] > magic_number
-                    || rows[0]->row[1] + rows[1]->row[1] + rows[2]->row[1] > magic_number
-                    || rows[0]->row[0] + rows[1]->row[0] + rows[2]->row[0] > magic_number)
+            if (rows[0]->row[2] + rows[1]->row[2] + rows[2]->row[2] + START_NUM > magic_number
+                    || rows[0]->row[1] + rows[1]->row[1] + rows[2]->row[1] + START_NUM > magic_number
+                    || rows[0]->row[0] + rows[1]->row[0] + rows[2]->row[0] + START_NUM > magic_number)
                 continue;
             /* Diagonal from top left */
-            if (rows[0]->row[0] + rows[1]->row[1] + rows[2]->row[2] > magic_number)
+            if (rows[0]->row[0] + rows[1]->row[1] + rows[2]->row[2] + START_NUM > magic_number)
                 continue;
             /* Diagonal from top right */
-            if (rows[0]->row[3] + rows[1]->row[2] + rows[2]->row[1] > magic_number)
+            if (rows[0]->row[3] + rows[1]->row[2] + rows[2]->row[1] + START_NUM > magic_number)
                 continue;
             if (rows_duplicates_exist(rows, 3, size))
                 continue;
