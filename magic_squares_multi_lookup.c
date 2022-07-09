@@ -163,7 +163,7 @@ int find_magic_squares(int magic_number, int size, struct row_list_entry *row_li
         /* Third column */
         if (rows[0]->row[3] + rows[1]->row[3] > magic_number)
             break;
-        if (strict > 1) {
+        if (strict & 2) {
             /* Taurus diagonals */
             if (rows[0]->row[2] + rows[1]->row[3] > magic_number
                     || rows[0]->row[0] + rows[1]->row[3] > magic_number)
@@ -175,7 +175,8 @@ int find_magic_squares(int magic_number, int size, struct row_list_entry *row_li
                     || rows[0]->row[1] + rows[1]->row[0] > magic_number
                     || rows[0]->row[2] + rows[1]->row[1] > magic_number)
                 continue;
-        } else if (strict == 1) {
+        }
+        if (strict & 1) {
             /* Quadrants */
             if (rows[0]->row[0] + rows[0]->row[1] + rows[1]->row[0] + rows[1]->row[1] != magic_number
                     || rows[0]->row[2] + rows[0]->row[3] + rows[1]->row[2] + rows[1]->row[3] != magic_number)
@@ -198,7 +199,7 @@ int find_magic_squares(int magic_number, int size, struct row_list_entry *row_li
             /* Third column */
             if (rows[0]->row[3] + rows[1]->row[3] + rows[2]->row[3] > magic_number)
                 break;
-            if (strict > 1) {
+            if (strict & 2) {
                 /* Taurus diagonals */
                 if (rows[0]->row[1] + rows[1]->row[2] + rows[2]->row[3] > magic_number
                         || rows[0]->row[1] + rows[1]->row[0] + rows[2]->row[3] > magic_number)
@@ -210,7 +211,8 @@ int find_magic_squares(int magic_number, int size, struct row_list_entry *row_li
                         /* || rows[0]->row[1] + rows[1]->row[0] + rows[2]->row[3] > magic_number */
                         || rows[0]->row[2] + rows[1]->row[1] + rows[2]->row[0] > magic_number)
                     continue;
-            } else if (strict == 1) {
+            }
+            if (strict & 1) {
                 /* Quadrants */
                 if (rows[1]->row[1] + rows[1]->row[2] + rows[2]->row[1] + rows[2]->row[2] != magic_number)
                     continue;
@@ -235,7 +237,7 @@ int find_magic_squares(int magic_number, int size, struct row_list_entry *row_li
                 /* Breakable diagonal from top left */
                 if (rows[0]->row[0] + rows[1]->row[1] + rows[2]->row[2] + rows[3]->row[3] > magic_number)
                     break;
-                if (strict > 1) {
+                if (strict & 2) {
                     /* Breakable taurus diagonal */
                     if (rows[0]->row[2] + rows[1]->row[1] + rows[2]->row[0] + rows[3]->row[3] > magic_number)
                         break;
@@ -247,7 +249,8 @@ int find_magic_squares(int magic_number, int size, struct row_list_entry *row_li
                             || rows[0]->row[1] + rows[1]->row[0] + rows[2]->row[3] + rows[3]->row[2] != magic_number
                             || rows[0]->row[2] + rows[1]->row[1] + rows[2]->row[0] + rows[3]->row[3] != magic_number)
                         continue;
-                } else if (strict == 1) {
+                }
+                if (strict & 1) {
                     /* Quadrants */
                     if (rows[2]->row[0] + rows[2]->row[1] + rows[3]->row[0] + rows[3]->row[1] != magic_number
                             || rows[2]->row[2] + rows[2]->row[3] + rows[3]->row[2] + rows[3]->row[3] != magic_number)

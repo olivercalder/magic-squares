@@ -138,7 +138,7 @@ int find_magic_squares(int magic_number, int *seed_row, struct square_list_entry
         /* Third column */
         if (E(square, 0, 3) + E(square, 1, 3) > magic_number)
             break;
-        if (strict > 1) {
+        if (strict & 2) {
             /* Breakable taurus diagonals */
             if (E(square, 0, 2) + E(square, 1, 3) > magic_number
                     || E(square, 0, 0) + E(square, 1, 3) > magic_number)
@@ -180,7 +180,7 @@ int find_magic_squares(int magic_number, int *seed_row, struct square_list_entry
             E(square, 1, 0) = magic_number - E(square, 1, 1) - E(square, 1, 2) - E(square, 1, 3) - 1;
             continue;
         }
-        if (strict > 1) {
+        if (strict & 2) {
             /* Taurus diagonals */
             if (E(square, 0, 1) + E(square, 1, 2) > magic_number
                     /* || E(square, 0, 2) + E(square, 1, 3) > magic_number */
@@ -189,7 +189,8 @@ int find_magic_squares(int magic_number, int *seed_row, struct square_list_entry
                     || E(square, 0, 1) + E(square, 1, 0) > magic_number
                     || E(square, 0, 2) + E(square, 1, 1) > magic_number)
                 continue;
-        } else if (strict == 1) {
+        }
+        if (strict & 1) {
             /* Quadrants */
             if (E(square, 0, 0) + E(square, 0, 1) + E(square, 1, 0) + E(square, 1, 1) != magic_number)
                 continue;
@@ -203,7 +204,7 @@ int find_magic_squares(int magic_number, int *seed_row, struct square_list_entry
             /* Third column */
             if (E(square, 0, 3) + E(square, 1, 3) + E(square, 2, 3) > magic_number)
                 break;
-            if (strict > 1) {
+            if (strict & 2) {
                 /* Breakable taurus diagonals */
                 if (E(square, 0, 1) + E(square, 1, 2) + E(square, 2, 3) > magic_number
                         || E(square, 0, 1) + E(square, 1, 0) + E(square, 2, 3) > magic_number)
@@ -245,7 +246,7 @@ int find_magic_squares(int magic_number, int *seed_row, struct square_list_entry
                 E(square, 2, 0) = magic_number - E(square, 2, 1) - E(square, 2, 2) - E(square, 2, 3) - 1;
                 continue;
             }
-            if (strict > 1) {
+            if (strict & 2) {
                 /* Taurus diagonals */
                 if (/* E(square, 0, 1) + E(square, 1, 2) + E(square, 2, 3) > magic_number */
                            E(square, 0, 2) + E(square, 1, 3) + E(square, 2, 0) > magic_number
@@ -254,7 +255,8 @@ int find_magic_squares(int magic_number, int *seed_row, struct square_list_entry
                         /* || E(square, 0, 1) + E(square, 1, 0) + E(square, 2, 3) > magic_number */
                         || E(square, 0, 2) + E(square, 1, 1) + E(square, 2, 0) > magic_number)
                     continue;
-            } else if (strict == 1) {
+            }
+            if (strict & 1) {
                 /* Quadrants */
                 if (E(square, 1, 1) + E(square, 1, 2) + E(square, 2, 1) + E(square, 2, 2) != magic_number)
                     continue;
@@ -271,7 +273,7 @@ int find_magic_squares(int magic_number, int *seed_row, struct square_list_entry
                 /* Breakable diagonal from top left */
                 if (E(square, 0, 0) + E(square, 1, 1) + E(square, 2, 2) + E(square, 3, 3) > magic_number)
                     break;
-                if (strict > 1) {
+                if (strict & 2) {
                     /* Breakable taurus diagonals */
                     if (E(square, 0, 2) + E(square, 1, 1) + E(square, 2, 0) + E(square, 3, 3) > magic_number)
                         break;
@@ -293,7 +295,7 @@ int find_magic_squares(int magic_number, int *seed_row, struct square_list_entry
                     E(square, 3, 0) = magic_number - E(square, 3, 1) - E(square, 3, 2) - E(square, 3, 3) - 1;
                     continue;
                 }
-                if (strict > 1) {
+                if (strict & 2) {
                     /* Taurus diagonals */
                     if (E(square, 0, 1) + E(square, 1, 2) + E(square, 2, 3) + E(square, 3, 0) != magic_number
                             || E(square, 0, 2) + E(square, 1, 3) + E(square, 2, 0) + E(square, 3, 1) != magic_number
@@ -302,7 +304,8 @@ int find_magic_squares(int magic_number, int *seed_row, struct square_list_entry
                             || E(square, 0, 1) + E(square, 1, 0) + E(square, 2, 3) + E(square, 3, 2) != magic_number
                             || E(square, 0, 2) + E(square, 1, 1) + E(square, 2, 0) + E(square, 3, 3) != magic_number)
                         continue;
-                } else if (strict == 1) {
+                }
+                if (strict & 1) {
                     /* Quadrants */
                     if (E(square, 2, 0) + E(square, 2, 1) + E(square, 3, 0) + E(square, 3, 1) != magic_number)
                         continue;
