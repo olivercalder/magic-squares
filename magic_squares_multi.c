@@ -202,7 +202,7 @@ int find_magic_squares(int magic_number, int *seed_row, struct square_list_entry
             continue;
         reset_row(square, 2);
         while (increment_row(square, 2, magic_number) == 0) {
-            /* Once third row is set and valid, fourth can be determined */
+            /* Once third row is set and valid, fourth can be computed directly */
             /* Third column */
             if ((tmp_sum = E(square, 0, 3) + E(square, 1, 3) + E(square, 2, 3)) + START_NUM > magic_number)
                 break;
