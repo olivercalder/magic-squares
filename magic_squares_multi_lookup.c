@@ -3,7 +3,6 @@
 #include <pthread.h>
 #include <string.h>
 #include <unistd.h>
-#include <assert.h>
 
 #define LOGSIZE (2)
 #define SIZE (4)
