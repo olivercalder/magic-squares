@@ -103,6 +103,7 @@ void compute_rows(int magic_number, struct row_list_entry **row_list, int *count
     struct row_list_entry *tmp, *tail;
     int row[SIZE] = {START_NUM, START_NUM, START_NUM, START_NUM};
     *row_list = NULL;
+    *seed_list = NULL;
     *count = 0;
     while (increment_row(row, 0, magic_number) == 0) {
         if (sum_of_row(row, 0) != magic_number)
@@ -314,7 +315,7 @@ void *thread_find_magic_squares(void *arg) {
     pthread_exit(0);
 }
 
-char *USAGE = "USAGE: %s [-h] [-m NUMBER] [-p] [-s]\n"
+char *USAGE = "USAGE: %s [-h] [-m NUMBER] [-o OUTFILE] [-p] [-s] [-S] [-t THREADS]\n"
 "   -h          display this help message\n"
 "   -m NUMBER   use NUMBER as the magic number\n"
 "   -o OUTFILE  write results to the following output file -- default is stdout\n"
