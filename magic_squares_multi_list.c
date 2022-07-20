@@ -233,6 +233,7 @@ int find_magic_squares(int magic_number, int size, int no_zero, struct row_list_
             /* Delete diagonal symmetry by forcing top left < bottom right */
             if (rows[0]->row[0] > rows[3]->row[3])
                 continue;
+            /* Check final row sums to magic number and no duplicates exist */
             if (sum_of_row(rows[3]->row) != magic_number
                     || duplicates_exist_in_row(rows[3]->row, size))
                 continue;

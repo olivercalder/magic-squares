@@ -3,6 +3,7 @@
 #include <pthread.h>
 #include <string.h>
 #include <unistd.h>
+#include <assert.h>
 
 struct row_list_entry {
     int *row;
@@ -40,6 +41,7 @@ int increment_row(int *row, int magic_number, int size, int no_zero) {
         row[i]++;
         if (row[i] <= magic_number)
             return 0;
+        row[i] = 0;
     }
     return 1;
 }
@@ -174,6 +176,7 @@ int find_magic_squares(int magic_number, int size, int no_zero, struct row_list_
     struct row_list_entry *final_row;
     struct square_list_entry *tmp, *tail = NULL;
     *square_list = NULL;
+    assert(size > 2);
     rows = malloc(sizeof(struct row_list_entry *) * size);
     final_row = malloc(sizeof(struct row_list_entry));
     final_row->row = malloc(sizeof(int) * size);
@@ -181,15 +184,13 @@ int find_magic_squares(int magic_number, int size, int no_zero, struct row_list_
     rows[size - 1] = final_row;
     row_index = 1;
     rows[row_index] = row_list;
-MAIN_LOOP:
-    if (rows[row_index] == NULL) {
+    if (rows[row_index] == NULL)
         goto BREAK;
-    }
-    if (row_index == size - 2) {
+    if (row_index == size - 2)
         goto FINAL_TWO_ROWS;
-    }
-    tmp_sum = 0;
+MAIN_LOOP:
     /* Final column */
+    tmp_sum = 0;
     for (i = 0; i <= row_index; i++)
         tmp_sum += rows[i]->row[size - 1];
     if (tmp_sum + min_remaining(size, row_index, no_zero) > magic_number)
@@ -219,12 +220,12 @@ MAIN_LOOP:
                 goto NEXT;
         }
         /* Continuable left diagonals */
-        for (j = 0; i < size; j++) {
+        for (j = 0; j < size - 1; j++) {
             if (j + 1 == row_index)
                 continue;
             tmp_sum = 0;
             for (i = 0; i <= row_index; i++)
-                tmp_sum += rows[i]->row[(i - j) % size];
+                tmp_sum += rows[i]->row[(j - i) % size];
             if (tmp_sum + min_remaining(size, row_index, no_zero) > magic_number)
                 goto NEXT;
         }
@@ -238,9 +239,9 @@ MAIN_LOOP:
         }
     }
     /* Remaining columns */
-    for (j = 0; j <= row_index; j++) {
+    for (j = 0; j < size - 1; j++) {
         tmp_sum = 0;
-        for (i = 0; i < size - 1; i++) {
+        for (i = 0; i <= row_index; i++) {
             tmp_sum += rows[i]->row[j];
             if (tmp_sum + min_remaining(size, row_index, no_zero) > magic_number)
                 goto NEXT;
@@ -263,130 +264,128 @@ MAIN_LOOP:
         goto NEXT;
     row_index++;
     rows[row_index] = row_list;
+    if (row_index == size - 2)
+        goto FINAL_TWO_ROWS;
     goto MAIN_LOOP;
-FINAL_TWO_ROWS:
 NEXT:
     rows[row_index] = rows[row_index]->next;
+    if (rows[row_index] == NULL)
+        goto BREAK;
     goto MAIN_LOOP;
+FINAL_TWO_ROWS:
+    /* Final column */
+    tmp_sum = 0;
+    for (i = 0; i <= row_index; i++)
+        tmp_sum += rows[i]->row[size - 1];
+    if (tmp_sum + no_zero > magic_number)
+        goto BREAK;
+    rows[size - 1]->row[size - 1] = magic_number - tmp_sum;
+    /* Taurus diagonals */
+    if (strict & 2) {
+        /* Breakable right diagonal */
+        tmp_sum = 0;
+        for (i = 0; i <= row_index; i++)
+            tmp_sum += rows[i]->row[size + i - (row_index + 1)];
+        if (tmp_sum + no_zero > magic_number)
+            goto BREAK;
+        /* Breakable left diagonal */
+        tmp_sum = 0;
+        for (i = 0; i <= row_index; i++)
+            tmp_sum += rows[i]->row[(row_index - (i + 1)) % size];
+        if (tmp_sum + no_zero > magic_number)
+            goto BREAK;
+    }
+    /* Remaining columns */
+    for (j = 0; j < size - 1; j++) {
+        tmp_sum = 0;
+        for (i = 0; i <= row_index; i++)
+            tmp_sum += rows[i]->row[j];
+        if (tmp_sum + no_zero > magic_number)
+            goto NEXT_FINAL;
+        rows[size - 1]->row[j] = magic_number - tmp_sum;
+    }
+    /* Delete vertical symmetry by forcing top left < bottom left */
+    if (rows[0]->row[0] > rows[size - 1]->row[0])
+        goto NEXT_FINAL;
+    /* Delete diagonal symmetry by forcing top right < bottom left */
+    if (rows[0]->row[size - 1] > rows[size - 1]->row[0])
+        goto NEXT_FINAL;
+    /* Delete diagonal symmetry by forcing top left < bottom right */
+    if (rows[0]->row[0] > rows[size - 1]->row[size - 1])
+        goto NEXT_FINAL;
+    /* Check final row sums to magic number */
+    tmp_sum = 0;
+    for (i = 0; i < size; i++)
+        tmp_sum += rows[size - 1]->row[i];
+    if (tmp_sum != magic_number)
+        goto NEXT_FINAL;
+    /* Check no duplicates exist in final row */
+    if (duplicates_exist_in_row(rows[size - 1]->row, size))
+        goto NEXT_FINAL;
+    /* Diagonal from top left */
+    tmp_sum = 0;
+    for (i = 0; i < size; i++)
+        tmp_sum += rows[i]->row[i];
+    if (tmp_sum != magic_number)
+        goto NEXT_FINAL;
+    /* Diagonal from top right */
+    tmp_sum = 0;
+    for (i = 0; i < size; i++)
+        tmp_sum += rows[i]->row[size - (i + 1)];
+    if (tmp_sum != magic_number)
+        goto NEXT_FINAL;
+    /* Taurus diagonals */
+    if (strict & 2) {
+        /* Right diagonals */
+        for (j = 1; j < size; j++) {
+            tmp_sum = 0;
+            for (i = 0; i < size; i++)
+                tmp_sum += rows[i]->row[(i + j) % size];
+            if (tmp_sum != magic_number)
+                goto NEXT_FINAL;
+        }
+        /* Left diagonals */
+        for (j = 0; j < size - 1; j++) {
+            tmp_sum = 0;
+            for (i = 0; i < size; i++)
+                tmp_sum += rows[i]->row[(j - i) % size];
+            if (tmp_sum != magic_number)
+                goto NEXT_FINAL;
+        }
+    }
+    if (strict & 1) {
+        /* Quadrants, only applicable for 4x4 */
+        if (size == 4) {
+            if (rows[1]->row[1] + rows[1]->row[2] + rows[2]->row[1] + rows[2]->row[2] != magic_number
+                    || rows[2]->row[0] + rows[2]->row[1] + rows[3]->row[0] + rows[3]->row[1] != magic_number
+                    || rows[2]->row[2] + rows[2]->row[3] + rows[3]->row[2] + rows[3]->row[3] != magic_number)
+                goto NEXT_FINAL;
+        }
+    }
+    if (rows_duplicates_exist(rows, row_index, size)
+            || rows_duplicates_exist(rows, size - 1, size))
+        goto NEXT_FINAL;
+    /* If made it here, this is a valid magic square */
+    tmp = malloc(sizeof(struct square_list_entry));
+    tmp->square = malloc(sizeof(int) * size * size);
+    for (i = 0; i < size; i++)
+        memcpy(&(tmp->square[i * size]), rows[i]->row, sizeof(int) * size);
+    tmp->next = NULL;
+    if (*square_list == NULL)
+        *square_list = tmp;
+    else
+        tail->next = tmp;
+    tail = tmp;
+    magic_square_count++;
+NEXT_FINAL:
+    rows[row_index] = rows[row_index]->next;
+    if (rows[row_index] != NULL)
+        goto FINAL_TWO_ROWS;
 BREAK:
     row_index--;
     if (row_index > 0)
         goto NEXT;
 END:
-    free(final_row->rows);
-    free(final_row);
-    free(rows);
-    return magic_square_count;
-
-
-    for (rows[1] = row_list; rows[1] != NULL; rows[1] = rows[1]->next) {
-        /* Third column */
-        if (rows[0]->row[3] + rows[1]->row[3] + no_zero + no_zero > magic_number)
-            break;
-        if (strict & 2) {
-            /* Taurus diagonals */
-            if (rows[0]->row[2] + rows[1]->row[3] + no_zero + no_zero > magic_number
-                    || rows[0]->row[0] + rows[1]->row[3] + no_zero + no_zero > magic_number)
-                break;
-            if (rows[0]->row[1] + rows[1]->row[2] + no_zero + no_zero > magic_number
-                    /* || rows[0]->row[2] + rows[1]->row[3] + no_zero + no_zero > magic_number */
-                    || rows[0]->row[3] + rows[1]->row[0] + no_zero + no_zero > magic_number
-                    /* || rows[0]->row[0] + rows[1]->row[3] + no_zero + no_zero > magic_number */
-                    || rows[0]->row[1] + rows[1]->row[0] + no_zero + no_zero > magic_number
-                    || rows[0]->row[2] + rows[1]->row[1] + no_zero + no_zero > magic_number)
-                continue;
-        }
-        if (strict & 1) {
-            /* Quadrants */
-            if (rows[0]->row[0] + rows[0]->row[1] + rows[1]->row[0] + rows[1]->row[1] != magic_number
-                    || rows[0]->row[2] + rows[0]->row[3] + rows[1]->row[2] + rows[1]->row[3] != magic_number)
-                continue;
-        }
-        /* Remaining columns */
-        if (rows[0]->row[2] + rows[1]->row[2] + no_zero + no_zero > magic_number
-                || rows[0]->row[1] + rows[1]->row[1] + no_zero + no_zero > magic_number
-                || rows[0]->row[0] + rows[1]->row[0] + no_zero + no_zero > magic_number)
-            continue;
-        /* Diagonal from top left */
-        if (rows[0]->row[0] + rows[1]->row[1] + no_zero + no_zero > magic_number)
-            continue;
-        /* Diagonal from top right */
-        if (rows[0]->row[3] + rows[1]->row[2] + no_zero + no_zero > magic_number)
-            continue;
-        if (rows_duplicates_exist(rows, 2, size))
-            continue;
-        for (rows[2] = row_list; rows[2] != NULL; rows[2] = rows[2]->next) {
-            /* Once third row is set and valid, fourth can be computed directly */
-            /* Third column */
-            if ((tmp_sum = rows[0]->row[3] + rows[1]->row[3] + rows[2]->row[3]) + no_zero > magic_number)
-                break;
-            rows[3]->row[3] = magic_number - tmp_sum;
-            if (strict & 2) {
-                /* Taurus diagonals */
-                if (rows[0]->row[1] + rows[1]->row[2] + rows[2]->row[3] + no_zero > magic_number
-                        || rows[0]->row[1] + rows[1]->row[0] + rows[2]->row[3] + no_zero > magic_number)
-                    break;
-            }
-            /* Remaining columns */
-            if ((tmp_sum = rows[0]->row[2] + rows[1]->row[2] + rows[2]->row[2]) + no_zero > magic_number)
-                continue;
-            rows[3]->row[2] = magic_number - tmp_sum;
-            if ((tmp_sum = rows[0]->row[1] + rows[1]->row[1] + rows[2]->row[1]) + no_zero > magic_number)
-                continue;
-            rows[3]->row[1] = magic_number - tmp_sum;
-            if ((tmp_sum = rows[0]->row[0] + rows[1]->row[0] + rows[2]->row[0]) + no_zero > magic_number)
-                continue;
-            rows[3]->row[0] = magic_number - tmp_sum;
-            /* Delete vertical symmetry by forcing top left < bottom left */
-            if (rows[0]->row[0] > rows[3]->row[0])
-                continue;
-            /* Delete diagonal symmetry by forcing top right < bottom left */
-            if (rows[0]->row[3] > rows[3]->row[0])
-                continue;
-            /* Delete diagonal symmetry by forcing top left < bottom right */
-            if (rows[0]->row[0] > rows[3]->row[3])
-                continue;
-            if (sum_of_row(rows[3]->row, size) != magic_number
-                    || duplicates_exist_in_row(rows[3]->row, size))
-                continue;
-            /* Diagonal from top left */
-            if (rows[0]->row[0] + rows[1]->row[1] + rows[2]->row[2] + rows[3]->row[3] != magic_number)
-                continue;
-            /* Diagonal from top right */
-            if (rows[0]->row[3] + rows[1]->row[2] + rows[2]->row[1] + rows[3]->row[0] != magic_number)
-                continue;
-            if (strict & 2) {
-                if (rows[0]->row[1] + rows[1]->row[2] + rows[2]->row[3] + rows[3]->row[0] != magic_number
-                        || rows[0]->row[2] + rows[1]->row[3] + rows[2]->row[0] + rows[3]->row[1] != magic_number
-                        || rows[0]->row[3] + rows[1]->row[0] + rows[2]->row[1] + rows[3]->row[2] != magic_number
-                        || rows[0]->row[0] + rows[1]->row[3] + rows[2]->row[2] + rows[3]->row[1] != magic_number
-                        || rows[0]->row[1] + rows[1]->row[0] + rows[2]->row[3] + rows[3]->row[2] != magic_number
-                        || rows[0]->row[2] + rows[1]->row[1] + rows[2]->row[0] + rows[3]->row[3] != magic_number)
-                    continue;
-            }
-            if (strict & 1) {
-                /* Quadrants */
-                if (rows[1]->row[1] + rows[1]->row[2] + rows[2]->row[1] + rows[2]->row[2] != magic_number
-                        || rows[2]->row[0] + rows[2]->row[1] + rows[3]->row[0] + rows[3]->row[1] != magic_number
-                        || rows[2]->row[2] + rows[2]->row[3] + rows[3]->row[2] + rows[3]->row[3] != magic_number)
-                    continue;
-            }
-            if (rows_duplicates_exist(rows, 3, size) || rows_duplicates_exist(rows, 4, size))
-                continue;
-            /* If made it here, this is a valid magic square */
-            tmp = malloc(sizeof(struct square_list_entry));
-            tmp->square = malloc(sizeof(int) * size * size);
-            for (i = 0; i < size; i++)
-                memcpy(&(tmp->square[i * size]), rows[i]->row, sizeof(int) * size);
-            tmp->next = NULL;
-            if (*square_list == NULL)
-                *square_list = tmp;
-            else
-                tail->next = tmp;
-            tail = tmp;
-            magic_square_count++;
-        }
-    }
     free(final_row->row);
     free(final_row);
     free(rows);
