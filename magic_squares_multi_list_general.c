@@ -5,6 +5,8 @@
 #include <unistd.h>
 #include <assert.h>
 
+#define MOD(a, b) ((((a) % (b)) + (b)) % b)
+
 struct row_list_entry {
     int *row;
     struct row_list_entry *next;
@@ -217,7 +219,7 @@ MAIN_LOOP:
         /* Breakable left diagonal */
         tmp_sum = 0;
         for (i = 0; i <= row_index; i++)
-            tmp_sum += rows[i]->row[(row_index - (i + 1)) % size];
+            tmp_sum += rows[i]->row[MOD(row_index - (i + 1),size)];
         if (tmp_sum + min_remaining > magic_number)
             goto BREAK;
         /* Continuable right diagonals */
@@ -226,7 +228,7 @@ MAIN_LOOP:
                 continue;
             tmp_sum = 0;
             for (i = 0; i <= row_index; i++)
-                tmp_sum += rows[i]->row[(i + j) % size];
+                tmp_sum += rows[i]->row[MOD(i + j, size)];
             if (tmp_sum + min_remaining > magic_number)
                 goto NEXT;
         }
@@ -236,7 +238,7 @@ MAIN_LOOP:
                 continue;
             tmp_sum = 0;
             for (i = 0; i <= row_index; i++)
-                tmp_sum += rows[i]->row[(j - i) % size];
+                tmp_sum += rows[i]->row[MOD(j - i, size)];
             if (tmp_sum + min_remaining > magic_number)
                 goto NEXT;
         }
@@ -303,7 +305,7 @@ FINAL_TWO_ROWS:
         /* Breakable left diagonal */
         tmp_sum = 0;
         for (i = 0; i <= row_index; i++)
-            tmp_sum += rows[i]->row[(row_index - (i + 1)) % size];
+            tmp_sum += rows[i]->row[MOD(row_index - (i + 1), size)];
         if (tmp_sum + no_zero > magic_number)
             goto BREAK;
     }
@@ -352,7 +354,7 @@ FINAL_TWO_ROWS:
         for (j = 1; j < size; j++) {
             tmp_sum = 0;
             for (i = 0; i < size; i++)
-                tmp_sum += rows[i]->row[(i + j) % size];
+                tmp_sum += rows[i]->row[MOD(i + j, size)];
             if (tmp_sum != magic_number)
                 goto NEXT_FINAL;
         }
@@ -360,7 +362,7 @@ FINAL_TWO_ROWS:
         for (j = 0; j < size - 1; j++) {
             tmp_sum = 0;
             for (i = 0; i < size; i++)
-                tmp_sum += rows[i]->row[(j - i) % size];
+                tmp_sum += rows[i]->row[MOD(j - i, size)];
             if (tmp_sum != magic_number)
                 goto NEXT_FINAL;
         }
