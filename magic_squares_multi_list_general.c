@@ -57,6 +57,16 @@ void print_magic_square(int *square, int size, FILE *outfile) {
     fprintf(outfile, "\n");
 }
 
+void print_rows(struct row_list_entry **rows, int size) {
+    int i, j;
+    for (i = 0; i < size; i++) {
+        printf("%d", rows[i]->row[0]);
+        for (j = 1; j < size; j++)
+            printf(" %d", rows[i]->row[j]);
+        printf("\n");
+    }
+}
+
 int sum_of_row(int *row, int size) {
     int i, sum = 0;
     for (i = 0; i < size; i++)
@@ -125,10 +135,10 @@ void reset_row(int *row, int size, int no_zero) {
         row[i] = no_zero;
 }
 
-int min_remaining(int size, int row_index, int no_zero) {
+int compute_min_remaining(int size, int row_index, int no_zero) {
     int i, sum = 0;
     for (i = 0; i < size - (row_index + 1); i++)
-        sum += i + row_index;
+        sum += i + no_zero;
     return sum;
 }
 
@@ -171,7 +181,7 @@ void compute_rows(int magic_number, int size, int no_zero, struct row_list_entry
 }
 
 int find_magic_squares(int magic_number, int size, int no_zero, struct row_list_entry *row_list, struct row_list_entry *seed_row, struct square_list_entry **square_list, int strict) {
-    int i, j, magic_square_count = 0, tmp_sum, row_index;
+    int i, j, magic_square_count = 0, tmp_sum, row_index, min_remaining;
     struct row_list_entry **rows;
     struct row_list_entry *final_row;
     struct square_list_entry *tmp, *tail = NULL;
@@ -189,11 +199,12 @@ int find_magic_squares(int magic_number, int size, int no_zero, struct row_list_
     if (row_index == size - 2)
         goto FINAL_TWO_ROWS;
 MAIN_LOOP:
+    min_remaining = compute_min_remaining(size, row_index, no_zero);
     /* Final column */
     tmp_sum = 0;
     for (i = 0; i <= row_index; i++)
         tmp_sum += rows[i]->row[size - 1];
-    if (tmp_sum + min_remaining(size, row_index, no_zero) > magic_number)
+    if (tmp_sum + min_remaining > magic_number)
         goto BREAK;
     /* Taurus diagonals */
     if (strict & 2) {
@@ -201,13 +212,13 @@ MAIN_LOOP:
         tmp_sum = 0;
         for (i = 0; i <= row_index; i++)
             tmp_sum += rows[i]->row[size + i - (row_index + 1)];
-        if (tmp_sum + min_remaining(size, row_index, no_zero) > magic_number)
+        if (tmp_sum + min_remaining > magic_number)
             goto BREAK;
         /* Breakable left diagonal */
         tmp_sum = 0;
         for (i = 0; i <= row_index; i++)
             tmp_sum += rows[i]->row[(row_index - (i + 1)) % size];
-        if (tmp_sum + min_remaining(size, row_index, no_zero) > magic_number)
+        if (tmp_sum + min_remaining > magic_number)
             goto BREAK;
         /* Continuable right diagonals */
         for (j = 1; j < size; j++) {
@@ -216,7 +227,7 @@ MAIN_LOOP:
             tmp_sum = 0;
             for (i = 0; i <= row_index; i++)
                 tmp_sum += rows[i]->row[(i + j) % size];
-            if (tmp_sum + min_remaining(size, row_index, no_zero) > magic_number)
+            if (tmp_sum + min_remaining > magic_number)
                 goto NEXT;
         }
         /* Continuable left diagonals */
@@ -226,7 +237,7 @@ MAIN_LOOP:
             tmp_sum = 0;
             for (i = 0; i <= row_index; i++)
                 tmp_sum += rows[i]->row[(j - i) % size];
-            if (tmp_sum + min_remaining(size, row_index, no_zero) > magic_number)
+            if (tmp_sum + min_remaining > magic_number)
                 goto NEXT;
         }
     }
@@ -243,7 +254,7 @@ MAIN_LOOP:
         tmp_sum = 0;
         for (i = 0; i <= row_index; i++) {
             tmp_sum += rows[i]->row[j];
-            if (tmp_sum + min_remaining(size, row_index, no_zero) > magic_number)
+            if (tmp_sum + min_remaining > magic_number)
                 goto NEXT;
         }
     }
@@ -251,17 +262,18 @@ MAIN_LOOP:
     tmp_sum = 0;
     for (i = 0; i <= row_index; i++)
         tmp_sum += rows[i]->row[i];
-    if (tmp_sum + min_remaining(size, row_index, no_zero) > magic_number)
+    if (tmp_sum + min_remaining > magic_number)
         goto NEXT;
     /* Diagonal from top right */
     tmp_sum = 0;
     for (i = 0; i <= row_index; i++)
         tmp_sum += rows[i]->row[size - (i + 1)];
-    if (tmp_sum + min_remaining(size, row_index, no_zero) > magic_number)
+    if (tmp_sum + min_remaining > magic_number)
         goto NEXT;
     /* Duplicate numbers */
     if (rows_duplicates_exist(rows, row_index, size))
         goto NEXT;
+    /* All good up to this row */
     row_index++;
     rows[row_index] = row_list;
     if (row_index == size - 2)
@@ -396,7 +408,8 @@ void *thread_find_magic_squares(void *arg) {
     struct thread_info *info = (struct thread_info *)arg;
     struct row_list_entry *seed_row_entry = info->seed_list;
     struct square_list *tmp, *tail;
-    int i, magic_square_count = 0;
+    int i, buf_index, magic_square_count = 0;
+    char out_buf[256];
     for (i = 0; i < info->thread_id; i++)
         seed_row_entry = seed_row_entry->next_seed;
     info->magic_square_count = 0;
@@ -412,10 +425,18 @@ void *thread_find_magic_squares(void *arg) {
         magic_square_count = find_magic_squares(info->magic_number, info->size, info->no_zero, info->row_list, seed_row_entry, &tail->squares, info->strict);
         info->magic_square_count += magic_square_count;
         if (!info->silent) {
-            if (magic_square_count)
-                fprintf(stderr, "Thread %d\tfound %lld additional magic squares from seed row [%d %d %d %d]\n", info->thread_id, magic_square_count, seed_row_entry->row[0], seed_row_entry->row[1], seed_row_entry->row[2], seed_row_entry->row[3]);
-            else
-                fprintf(stderr, "Thread %d\tfound no magic squares from seed row [%d %d %d %d]\n", info->thread_id, seed_row_entry->row[0], seed_row_entry->row[1], seed_row_entry->row[2], seed_row_entry->row[3]);
+            if (magic_square_count) {
+                buf_index = sprintf(out_buf, "Thread %d\tfound %lld additional magic squares from seed row [%d", info->thread_id, magic_square_count, seed_row_entry->row[0]);
+                for (i = 1; i < info->size; i++)
+                    buf_index += sprintf(out_buf + buf_index, " %d", seed_row_entry->row[i]);
+                buf_index += sprintf(out_buf + buf_index, "]\n\0");
+            } else {
+                buf_index = sprintf(out_buf, "Thread %d\tfound no magic squares from seed row [%d", info->thread_id, seed_row_entry->row[0]);
+                for (i = 1; i < info->size; i++)
+                    buf_index += sprintf(out_buf + buf_index, " %d", seed_row_entry->row[i]);
+                buf_index += sprintf(out_buf + buf_index, "]\n\0");
+            }
+            fprintf(stderr, out_buf);
         }
         for (i = 0; seed_row_entry != NULL && i < info->total_threads; i++)
             seed_row_entry = seed_row_entry->next_seed;
