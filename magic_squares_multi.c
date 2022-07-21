@@ -69,17 +69,6 @@ int sum_of_row(int *square, int row) {
     return E(square, row, 0) + E(square, row, 1) + E(square, row, 2) + E(square, row, 3);
 }
 
-int sum_of_col(int *square, int col) {
-    return E(square, 0, col) + E(square, 1, col) + E(square, 2, col) + E(square, 3, col);
-}
-
-int columns_correct(int *square, int magic_number) {
-    return sum_of_col(square, 0) == magic_number
-        && sum_of_col(square, 1) == magic_number
-        && sum_of_col(square, 2) == magic_number
-        && sum_of_col(square, 3) == magic_number;
-}
-
 int diagonals_correct(int *square, int magic_number) {
     return (E(square, 0, 0) + E(square, 1, 1) + E(square, 2, 2) + E(square, 3, 3) == magic_number
             && E(square, 0, 3) + E(square, 1, 2) + E(square, 2, 1) + E(square, 3, 0) == magic_number);

@@ -59,50 +59,11 @@ void print_magic_square(int *square, int size, FILE *outfile) {
     fprintf(outfile, "\n");
 }
 
-void print_rows(struct row_list_entry **rows, int size) {
-    int i, j;
-    for (i = 0; i < size; i++) {
-        printf("%d", rows[i]->row[0]);
-        for (j = 1; j < size; j++)
-            printf(" %d", rows[i]->row[j]);
-        printf("\n");
-    }
-}
-
 int sum_of_row(int *row, int size) {
     int i, sum = 0;
     for (i = 0; i < size; i++)
         sum += row[i];
     return sum;
-}
-
-int sum_of_col(struct row_list_entry **rows, int size, int col) {
-    int i, sum = 0;
-    for (i = 0; i < size; i++)
-        sum += rows[i]->row[col];
-    return sum;
-}
-
-int columns_correct(struct row_list_entry **rows, int magic_number, int size) {
-    int i;
-    for (i = 0; i < size; i++)
-        if (sum_of_col(rows, size, i) != magic_number)
-            return 0;
-    return 1;
-}
-
-int diagonals_correct(struct row_list_entry **rows, int magic_number, int size) {
-    int i, sum = 0;
-    for (i = 0; i < size; i++)
-        sum += rows[i]->row[i];
-    if (sum != magic_number)
-        return 0;
-    sum = 0;
-    for (i = 0; i < size; i++)
-        sum += rows[i]->row[size - 1 - i];
-    if (sum != magic_number)
-        return 0;
-    return 1;
 }
 
 int duplicates_exist_in_row(int *row, int size) {
@@ -129,12 +90,6 @@ int rows_duplicates_exist(struct row_list_entry **rows, int row_index, int size)
         }
     }
     return 0;
-}
-
-void reset_row(int *row, int size, int no_zero) {
-    int i;
-    for (i = 0; i < size; i++)
-        row[i] = no_zero;
 }
 
 int compute_min_remaining(int size, int row_index, int no_zero) {

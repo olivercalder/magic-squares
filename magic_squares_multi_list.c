@@ -68,22 +68,6 @@ int sum_of_row(int *row) {
     return row[0] + row[1] + row[2] + row[3];
 }
 
-int sum_of_col(struct row_list_entry **rows, int col) {
-    return rows[0]->row[col] + rows[1]->row[col] + rows[2]->row[col] + rows[3]->row[col];
-}
-
-int columns_correct(struct row_list_entry **rows, int magic_number) {
-    return sum_of_col(rows, 0) == magic_number
-        && sum_of_col(rows, 1) == magic_number
-        && sum_of_col(rows, 2) == magic_number
-        && sum_of_col(rows, 3) == magic_number;
-}
-
-int diagonals_correct(struct row_list_entry **rows, int magic_number) {
-    return (rows[0]->row[0] + rows[1]->row[1] + rows[2]->row[2] + rows[3]->row[3] == magic_number
-            && rows[0]->row[3] + rows[1]->row[2] + rows[2]->row[1] + rows[3]->row[0] == magic_number);
-}
-
 int duplicates_exist_in_row(int *row, int size) {
     int i = 0;
     int j = 1;
@@ -108,13 +92,6 @@ int rows_duplicates_exist(struct row_list_entry **rows, int row_index, int size)
         }
     }
     return 0;
-}
-
-void reset_row(int *row, int no_zero) {
-    row[0] = no_zero;
-    row[1] = no_zero;
-    row[2] = no_zero;
-    row[3] = no_zero;
 }
 
 void compute_rows(int magic_number, int size, int no_zero, struct row_list_entry **row_list, struct row_list_entry **seed_list, int *count, int *seed_count) {
