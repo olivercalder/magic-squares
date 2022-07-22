@@ -299,7 +299,7 @@ void *thread_find_magic_squares(void *arg) {
         info->magic_square_count += magic_square_count;
         if (!info->silent) {
             if (magic_square_count)
-                fprintf(stderr, "Thread %d\tfound %lld additional magic squares from seed row [%d %d %d %d]\n", info->thread_id, magic_square_count, seed_row_entry->row[0], seed_row_entry->row[1], seed_row_entry->row[2], seed_row_entry->row[3]);
+                fprintf(stderr, "Thread %d\tfound %d additional magic squares from seed row [%d %d %d %d]\n", info->thread_id, magic_square_count, seed_row_entry->row[0], seed_row_entry->row[1], seed_row_entry->row[2], seed_row_entry->row[3]);
             else
                 fprintf(stderr, "Thread %d\tfound no magic squares from seed row [%d %d %d %d]\n", info->thread_id, seed_row_entry->row[0], seed_row_entry->row[1], seed_row_entry->row[2], seed_row_entry->row[3]);
         }
@@ -347,7 +347,7 @@ int magic_squares(int magic_number, int size, int no_zero, int strict, int num_t
         free(tmp);
     }
     if (!silent)
-        fprintf(stderr, "There were %lld distinct magic squares found.\n\n", total_squares);
+        fprintf(stderr, "There were %d distinct magic squares found.\n\n", total_squares);
     if (outfilename != NULL)
         outfile = fopen(outfilename, "w");
     else

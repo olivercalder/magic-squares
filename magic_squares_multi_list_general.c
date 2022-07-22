@@ -383,17 +383,17 @@ void *thread_find_magic_squares(void *arg) {
         info->magic_square_count += magic_square_count;
         if (!info->silent) {
             if (magic_square_count) {
-                buf_index = sprintf(out_buf, "Thread %d\tfound %lld additional magic squares from seed row [%d", info->thread_id, magic_square_count, seed_row_entry->row[0]);
+                buf_index = sprintf(out_buf, "Thread %d\tfound %d additional magic squares from seed row [%d", info->thread_id, magic_square_count, seed_row_entry->row[0]);
                 for (i = 1; i < info->size; i++)
                     buf_index += sprintf(out_buf + buf_index, " %d", seed_row_entry->row[i]);
-                buf_index += sprintf(out_buf + buf_index, "]\n\0");
+                buf_index += sprintf(out_buf + buf_index, "]\n");
             } else {
                 buf_index = sprintf(out_buf, "Thread %d\tfound no magic squares from seed row [%d", info->thread_id, seed_row_entry->row[0]);
                 for (i = 1; i < info->size; i++)
                     buf_index += sprintf(out_buf + buf_index, " %d", seed_row_entry->row[i]);
-                buf_index += sprintf(out_buf + buf_index, "]\n\0");
+                buf_index += sprintf(out_buf + buf_index, "]\n");
             }
-            fprintf(stderr, out_buf);
+            fprintf(stderr, "%s", out_buf);
         }
         for (i = 0; seed_row_entry != NULL && i < info->total_threads; i++)
             seed_row_entry = seed_row_entry->next_seed;
@@ -440,7 +440,7 @@ int magic_squares(int magic_number, int size, int no_zero, int strict, int num_t
         free(tmp);
     }
     if (!silent)
-        fprintf(stderr, "There were %lld distinct magic squares found.\n\n", total_squares);
+        fprintf(stderr, "There were %d distinct magic squares found.\n\n", total_squares);
     if (outfilename != NULL)
         outfile = fopen(outfilename, "w");
     else
